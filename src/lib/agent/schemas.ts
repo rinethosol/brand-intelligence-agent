@@ -185,3 +185,31 @@ export const CRITERIA_LABELS: Record<CriterionKey, string> = {
 
 /** Hard upper bound for the self-correction loop. */
 export const MAX_CORRECTION_ITERATIONS = 3;
+
+export const RevisionPlanSchema = z.object({
+  changes: z.array(z.object({ rule_id: analysisText, instruction: analysisText }).strict()).min(1).max(100),
+  preserve: z.array(z.object({ rule_id: analysisText, attribute: analysisText }).strict()).max(108),
+  rationale: analysisText,
+}).strict();
+export type RevisionPlan = z.infer<typeof RevisionPlanSchema>;
+export const CorrectionLoopInputSchema = z.union([
+  z.object({ original: GeneratedCreativeSchema, analysis: BrandAnalysisSchema }).strict(),
+  z.object({ generation: GenerateCreativeInputSchema, analysis: BrandAnalysisSchema }).strict(),
+]);
+export type CorrectionLoopInput = z.infer<typeof CorrectionLoopInputSchema>;
+export type CorrectionEvent = {
+  id: string; at: string; stage: "generate" | "verify" | "identify" | "revise" | "reverify" | "report";
+  model: string | null; attempt: number; ruleIds: string[]; message: string;
+};
+export type CorrectionAttempt = {
+  number: number; plan: RevisionPlan; planResponseId: string; plannedAt: string;
+  previousAssetId: string; mode: "regeneration"; asset: GeneratedCreative | null;
+  verification: LiveVerification | null; correctedRuleIds: string[]; remainingRuleIds: string[];
+  improved: boolean; error: string | null;
+};
+export type CorrectionRun = {
+  id: string; startedAt: string; completedAt: string; original: GeneratedCreative | null;
+  originalVerification: LiveVerification | null; attempts: CorrectionAttempt[]; events: CorrectionEvent[];
+  finalStatus: VerificationStatus; stopReason: "no_actionable_violations" | "no_improvement" | "maximum_attempts" | "api_failure";
+  error: string | null; label: string;
+};
