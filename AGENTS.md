@@ -14,3 +14,5 @@
 - AI providers (reasoning, image, verifier) are adapters in `src/lib/agent/providers.server.ts`, loaded only inside server functions; credentials never reach the browser.
 - Unconfigured providers must return an explicit error, never fabricated results; demo data lives only in `demo-data.ts` and is always labeled in the UI.
 - The verifier must be a separate provider from the generator, and the correction loop is bounded by `MAX_CORRECTION_ITERATIONS`.
+- Brand analysis uses the documented Meta Responses input/output contract through the provider adapter; shared parsing rejects ungrounded values so the UI receives only validated analysis, never raw provider payloads.
+- The first brand-analysis action is a public same-origin server function protected by CSRF, not a user-data read; it receives only the submitted profile and does not persist it. Add endpoint authentication before introducing private saved data.
