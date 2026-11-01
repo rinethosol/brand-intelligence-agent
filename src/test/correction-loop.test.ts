@@ -21,7 +21,7 @@ function providers(sequence: LiveRuleFinding["status"][][]) {
   let i = 0;
   return { generate: vi.fn(async (_input, revision) => ({ ...structuredClone(original), id: "revision-" + revision?.attempt, iteration: (revision?.attempt ?? 0) + 1 })),
     verify: vi.fn(async ({ asset }) => verification(asset, sequence[i++] ?? ["REVISE"])),
-    plan: vi.fn(async ({ verification: result }) => ({ plan: { changes: actionableViolations(result).map((f) => ({ rule_id: f.rule_id, instruction: f.suggested_correction ?? "Remove" })), preserve: result.findings.filter((f) => f.status === "PASS").map((f) => ({ rule_id: f.rule_id, attribute: "Keep compliant forest" })), rationale: "Target verified violations only" }, responseId: "planner-response", plannedAt: new Date().toISOString() })) } satisfies CorrectionProviders;
+    plan: vi.fn(async ({ verification: result }: { asset: GeneratedCreative; verification: LiveVerification }) => ({ plan: { changes: actionableViolations(result).map((f) => ({ rule_id: f.rule_id, instruction: f.suggested_correction ?? "Remove" })), preserve: result.findings.filter((f) => f.status === "PASS").map((f) => ({ rule_id: f.rule_id, attribute: "Keep compliant forest" })), rationale: "Target verified violations only" }, responseId: "planner-response", plannedAt: new Date().toISOString() })) } satisfies CorrectionProviders;
 }
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe("Bounded correction safety", () => {
