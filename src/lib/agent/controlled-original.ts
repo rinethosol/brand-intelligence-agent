@@ -1,5 +1,5 @@
 import { CONTROLLED_ORIGINAL_ENDPOINT, CONTROLLED_ORIGINAL_LABEL, CONTROLLED_ORIGINAL_MODEL, GeneratedCreativeSchema,
-  type BrandAnalysis, type BrandAnalysisInput, type CreativeBrief, type GeneratedCreative } from "./schemas";
+  type BrandAnalysis, type CreativeBrief, type GeneratedCreative } from "./schemas";
 import { CREATIVE_SIZES } from "./creative-generation";
 import { inspectOriginalPng } from "./creative-verification";
 import { parseBrandAnalysis } from "./brand-analysis";
@@ -20,7 +20,7 @@ export function assetSourceLabel(asset: GeneratedCreative) {
  * Wraps a user-supplied PNG as an original bound to the strict profile, brief and validated rules.
  * Performs no model call and makes no compliance claim; verification must inspect it independently.
  */
-export function buildControlledOriginal(input: { imageUrl: string; byteLength: number; mimeType: string; profile: BrandAnalysisInput; brief: CreativeBrief; analysis: BrandAnalysis | undefined }): GeneratedCreative {
+export function buildControlledOriginal(input: { imageUrl: string; byteLength: number; mimeType: string; profile: GeneratedCreative["metadata"]["profile"]; brief: CreativeBrief; analysis: BrandAnalysis | undefined }): GeneratedCreative {
   if (input.mimeType !== "image/png") throw new ControlledOriginalError("Only PNG files are accepted.");
   if (input.byteLength > CONTROLLED_MAX_BYTES) throw new ControlledOriginalError("The PNG must be 8 MB or smaller.");
   if (!input.analysis) throw new ControlledOriginalError("Analyze the current brand profile first so the image is bound to validated rules.");
