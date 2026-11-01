@@ -1,6 +1,13 @@
 import { MAX_CORRECTION_ITERATIONS, type CorrectionLoopInput, type CorrectionRun, type GeneratedCreative, type GenerateCreativeInput, type LiveVerification, type RevisionPlan } from "./schemas";
 import { actionableViolations, compareVerifications, validateRevisionPlan } from "./correction";
 import { validateVerificationInput, inspectOriginalPng } from "./creative-verification";
+import { CONTROLLED_ORIGINAL_MODEL } from "./schemas";
+
+/** Controlled-test originals get one round; derived server-side from provenance, never from client input. */
+export const CONTROLLED_TEST_MAX_ATTEMPTS = 1;
+export function correctionRoundLimit(input: CorrectionLoopInput) {
+  return "original" in input && input.original.metadata.model === CONTROLLED_ORIGINAL_MODEL ? CONTROLLED_TEST_MAX_ATTEMPTS : MAX_CORRECTION_ITERATIONS;
+}
 
 export type CorrectionProviders = {
   generate: (input: GenerateCreativeInput, revision?: { plan: RevisionPlan; previous: GeneratedCreative; attempt: number }) => Promise<GeneratedCreative>;
@@ -17,13 +24,14 @@ async function confirmProvenance(asset: GeneratedCreative, verification: LiveVer
 /** Sequential calls reuse the same adapters as generateCreative / verifyCreative, never RPC stubs. */
 export async function executeCorrectionLoop(input: CorrectionLoopInput, providers: CorrectionProviders): Promise<CorrectionRun> {
   const run: CorrectionRun = { id: crypto.randomUUID(), startedAt: new Date().toISOString(), completedAt: "", original: null,
-    originalVerification: null, attempts: [], events: [], finalStatus: "NEEDS_REVIEW", stopReason: "api_failure", error: null,
+    originalVerification: null, attempts: [], events: [], finalStatus: "NEEDS_REVIEW", stopReason: "api_failure", error: null, maxAttempts: correctionRoundLimit(input),
     label: "original" in input ? input.original.metadata.profile.name : input.generation.profile.name };
   const event = (stage: CorrectionRun["events"][number]["stage"], message: string, attempt = 0, model: string | null = null, ruleIds: string[] = []) =>
     run.events.push({ id: crypto.randomUUID(), at: new Date().toISOString(), stage, message, attempt, model, ruleIds });
   let stage = "Initial generation";
   try {
     run.original = "original" in input ? structuredClone(input.original) : await providers.generate({ ...input.generation, analysis: input.analysis });
+    event("identify", `Configured round limit: ${run.maxAttempts} (${run.maxAttempts === MAX_CORRECTION_ITERATIONS ? "standard workflow" : "controlled test workflow"})`, 0);
     event("generate", "Original retained without modification", 0, run.original.metadata.model);
     validateVerificationInput({ asset: run.original, analysis: input.analysis });
     stage = "Original verification";
@@ -33,7 +41,7 @@ export async function executeCorrectionLoop(input: CorrectionLoopInput, provider
     run.originalVerification = current;
     run.finalStatus = current.overall;
     event("verify", `Original: ${current.overall}`, 0, current.model);
-    for (let attempt = 1; attempt <= MAX_CORRECTION_ITERATIONS; attempt++) {
+    for (let attempt = 1; attempt <= run.maxAttempts; attempt++) {
       const violations = actionableViolations(current);
       event("identify", `${violations.length} actionable violations`, attempt - 1, null, violations.map((f) => f.rule_id));
       if (!violations.length) { run.stopReason = "no_actionable_violations"; break; }
@@ -61,6 +69,7 @@ export async function executeCorrectionLoop(input: CorrectionLoopInput, provider
       if (!record.improved) { run.stopReason = "no_improvement"; break; }
       if (!actionableViolations(current).length) { run.stopReason = "no_actionable_violations"; break; }
       run.stopReason = "maximum_attempts";
+      if (attempt === run.maxAttempts) event("report", `Round limit ${run.maxAttempts} reached; ${actionableViolations(current).length} actionable violations remain unresolved`, attempt, null, actionableViolations(current).map((f) => f.rule_id));
     }
   } catch {
     // Never serialize provider bodies, exception messages or keys into history.
