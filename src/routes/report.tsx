@@ -19,8 +19,8 @@ export const Route = createFileRoute("/report")({
 
 function Report() {
   const { profile, brief, approval } = useWorkspace();
-  const final = demoVerifications[demoVerifications.length - 1];
-  const finalAsset = demoAssets[demoAssets.length - 1];
+  const final = demoVerifications[demoVerifications.length - 1]!;
+  const finalAsset = demoAssets[demoAssets.length - 1]!;
   return (
     <div>
       <PageHeader eyebrow="Step 05" title="Verification Report" description={`${profile.name} · ${brief.objective}`} />
@@ -50,7 +50,7 @@ function Report() {
               {demoVerifications.map((v, i) => (
                 <li key={v.id} className="rounded-lg border border-border p-4">
                   <div className="flex items-center justify-between"><p className="font-medium text-foreground">Iteration {i + 1}</p><StatusBadge status={v.overall} /></div>
-                  <p className="mt-1 text-xs text-muted-foreground">Prompt: {demoAssets[i].prompt}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Prompt: {demoAssets[i]?.prompt}</p>
                   {v.violations.length ? <ul className="mt-2 list-disc pl-4 text-sm text-destructive">{v.violations.map((x) => <li key={x}>{x}</li>)}</ul> : <p className="mt-2 text-sm text-success">No violations detected</p>}
                 </li>
               ))}

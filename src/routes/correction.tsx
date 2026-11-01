@@ -36,7 +36,7 @@ function Correction() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="grid gap-6 sm:grid-cols-2 lg:col-span-2">
           {demoAssets.map((a, idx) => {
-            const v = demoVerifications[idx];
+            const v = demoVerifications[idx]!;
             return (
               <Panel key={a.id} title={idx === 0 ? "Original" : "Revised"} right={<StatusBadge status={v.overall} />}>
                 <CreativeMock asset={a} profile={profile} headline={brief.message} />

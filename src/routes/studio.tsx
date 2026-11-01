@@ -78,7 +78,7 @@ function Studio() {
         </Panel>
         <div className="lg:col-span-2">
           <DemoNotice>The preview below is a hand-made mockup showing where generated creative will appear. No image has been generated.</DemoNotice>
-          <CreativeMock asset={demoAssets[1]} profile={profile} headline={brief.message} />
+          <CreativeMock asset={demoAssets[1]!} profile={profile} headline={brief.message} />
           <Button asChild variant="secondary" className="mt-4 w-full"><Link to="/verification">View demo verification</Link></Button>
         </div>
       </div>

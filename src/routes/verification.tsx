@@ -20,7 +20,7 @@ export const Route = createFileRoute("/verification")({
 function Verification() {
   const { profile, brief } = useWorkspace();
   const [i, setI] = useState(0);
-  const v = demoVerifications[i];
+  const v = demoVerifications[i] ?? demoVerifications[0]!;
   return (
     <div>
       <PageHeader eyebrow="Step 03" title="Brand Verification" description="An independent verifier — separate from the generator — evaluates each creative against the brand profile." />
@@ -32,7 +32,7 @@ function Verification() {
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-4">
-          <CreativeMock asset={demoAssets[i]} profile={profile} headline={brief.message} />
+          <CreativeMock asset={demoAssets[i] ?? demoAssets[0]!} profile={profile} headline={brief.message} />
           <Panel title="Overall status"><StatusBadge status={v.overall} large /><p className="mt-3 text-xs text-muted-foreground">Verifier: {v.verifier}</p></Panel>
         </div>
         <div className="space-y-4 lg:col-span-2">{v.criteria.map((c) => <CriterionCard key={c.key} c={c} />)}</div>

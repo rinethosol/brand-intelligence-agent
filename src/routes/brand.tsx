@@ -38,7 +38,7 @@ function BrandPage() {
       guidelines: list(g("guidelines")), forbiddenElements: list(g("forbidden")), logoUrl: logo,
     };
     const r = BrandProfileSchema.safeParse(draft);
-    if (!r.success) return toast.error(r.error.issues[0].message);
+    if (!r.success) return toast.error(r.error.issues[0]?.message ?? "Invalid profile");
     setWorkspace({ profile: r.data, profileIsDemo: false });
     toast.success("Brand Identity Profile saved");
   }
