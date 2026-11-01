@@ -1,4 +1,5 @@
-# Phase 2
-- [x] Inspect existing project and review official Muse Spark sources; exact request specification could not be verified.
-- [ ] Implement secure Muse Spark brand analysis — blocked on official request documentation and account credentials; stopped at the boundary.
-- [x] Record prerequisites, implemented changes, deferred features, and test results in PHASE2-STATUS.md.
+# Live Meta brand analysis
+- [ ] Confirm Responses request/output contract from official documentation or the full Playground example.
+- [ ] Configure the Meta key securely and implement validated server-side brand analysis.
+- [ ] Add analysis action and real status/results while preserving profile saving and other pages.
+- [ ] Run automated tests and a real Halden Outdoor request through the UI; report any blockers honestly.
