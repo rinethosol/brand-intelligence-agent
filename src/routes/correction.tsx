@@ -1,3 +1,4 @@
+import { isControlledOriginal } from "@/lib/agent/controlled-original";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -43,7 +44,7 @@ function Correction() {
     <PageHeader eyebrow="Step 04" title="Self-Correction Loop" description="Independent verification · up to three targeted regenerations · human approval remains separate" />
     {asset ? <>
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <Select value={asset.id} onValueChange={(id) => { setSelected(id); setError(""); }} disabled={running}><SelectTrigger className="w-full sm:w-80"><SelectValue /></SelectTrigger><SelectContent>{generatedCreatives.map((a,i) => <SelectItem key={a.id} value={a.id}>Creative {i+1} · {a.metadata.profile.name}</SelectItem>)}</SelectContent></Select>
+        <Select value={asset.id} onValueChange={(id) => { setSelected(id); setError(""); }} disabled={running}><SelectTrigger className="w-full sm:w-80"><SelectValue /></SelectTrigger><SelectContent>{generatedCreatives.map((a,i) => <SelectItem key={a.id} value={a.id}>Creative {i+1} · {a.metadata.profile.name}{isControlledOriginal(a) ? " · Controlled test (user-supplied)" : ""}</SelectItem>)}</SelectContent></Select>
         <Button onClick={onRun} disabled={running || !asset.metadata.analysis}>{running ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <WandSparkles className="mr-2 h-4 w-4" />}{running ? "Verifying and correcting…" : "Run Self-Correction"}</Button>
         {run && <Button asChild variant="outline"><Link to="/report">Open verification report</Link></Button>}
       </div>
