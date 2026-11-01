@@ -70,6 +70,41 @@ export const CreativeAssetSchema = z.object({
 });
 export type CreativeAsset = z.infer<typeof CreativeAssetSchema>;
 
+export const GenerateCreativeInputSchema = z.object({
+  profile: BrandAnalysisInputSchema,
+  brief: CreativeBriefSchema.extend({
+    objective: z.string().trim().min(1).max(2000),
+    message: z.string().trim().min(1).max(2000),
+    targetAudience: z.string().trim().min(1).max(2000),
+    visualDirection: z.string().trim().min(1).max(4000),
+  }),
+  analysis: BrandAnalysisSchema.optional(),
+}).strict().refine((v) => v.brief.brandId === v.profile.id, "The brief must belong to the current brand.");
+export type GenerateCreativeInput = z.infer<typeof GenerateCreativeInputSchema>;
+
+export const GeneratedCreativeSchema = CreativeAssetSchema.extend({
+  source: z.literal("live"),
+  imageUrl: z.string().startsWith("data:image/png;base64,"),
+  metadata: z.object({
+    model: z.literal("muse-image-1.0"),
+    endpoint: z.literal("https://api.meta.ai/v1/images/generations"),
+    created: z.number().int().positive(),
+    completedAt: z.string(),
+    requestedSize: z.string(),
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+    outputFormat: z.literal("png"),
+    usage: z.object({ input_tokens: z.number(), output_tokens: z.number(), total_tokens: z.number() }).optional(),
+    profile: BrandAnalysisInputSchema,
+    brief: CreativeBriefSchema,
+    analysis: BrandAnalysisSchema.optional(),
+    verificationStatus: z.literal("NEEDS_REVIEW"),
+    logoStatus: z.literal("requires_verification_or_post_processing"),
+    textStatus: z.literal("requires_verification_or_post_processing"),
+  }),
+});
+export type GeneratedCreative = z.infer<typeof GeneratedCreativeSchema>;
+
 export const CriterionKey = z.enum(["color_consistency", "personality_alignment", "forbidden_elements", "brief_alignment"]);
 export type CriterionKey = z.infer<typeof CriterionKey>;
 

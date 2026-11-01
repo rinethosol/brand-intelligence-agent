@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { BrandProfileSchema, CreativeBriefSchema, BrandAnalysisInputSchema } from "./schemas";
+import { BrandProfileSchema, CreativeBriefSchema, BrandAnalysisInputSchema, GenerateCreativeInputSchema } from "./schemas";
 import { z } from "zod";
 
 export const analyzeBrand = createServerFn({ method: "POST" })
@@ -18,6 +18,17 @@ export const getProviderStatus = createServerFn({ method: "GET" }).handler(async
   const { providerStatus } = await import("./providers.server");
   return providerStatus();
 });
+
+export const generateCreative = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => GenerateCreativeInputSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { generateCreativeWithMeta, CreativeGenerationError } = await import("./providers.server");
+    try { return { ok: true as const, asset: await generateCreativeWithMeta(data) }; }
+    catch (error) {
+      if (error instanceof CreativeGenerationError) return { ok: false as const, code: error.code, error: error.message };
+      return { ok: false as const, code: "invalid_input", error: "Generation could not be completed. Check the brand guidelines and campaign brief." };
+    }
+  });
 
 /**
  * Bounded self-correction loop entry point. Returns an honest error when any

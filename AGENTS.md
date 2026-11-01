@@ -16,3 +16,5 @@
 - The verifier must be a separate provider from the generator, and the correction loop is bounded by `MAX_CORRECTION_ITERATIONS`.
 - Brand analysis uses the documented Meta Responses input/output contract through the provider adapter; shared parsing rejects ungrounded values so the UI receives only validated analysis, never raw provider payloads.
 - The first brand-analysis action is a public same-origin server function protected by CSRF, not a user-data read; it receives only the submitted profile and does not persist it. Add endpoint authentication before introducing private saved data.
+- Creative generation uses a separate public CSRF-protected POST function and the documented Meta Images contract; it must not invoke the unconfigured correction/verifier loop because generation alone does not establish compliance.
+- Original PNGs and immutable profile/brief/prompt metadata are retained in workspace session history with downloads; no persisted private-data reads are introduced. Analysis may be reused only when its content fingerprint matches the submitted profile, avoiding stale guidelines.
