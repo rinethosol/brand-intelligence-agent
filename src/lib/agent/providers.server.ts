@@ -187,7 +187,10 @@ export async function verifyCreativeWithMeta(input: VerifyCreativeInput) {
     const text = envelope.data.output.filter((i) => i.type === "message" && i.role === "assistant" && i.status === "completed").flatMap((i) => i.content ?? []).filter((i) => i.type === "output_text").map((i) => i.text ?? "").join("");
     let visual;
     try { visual = parseVisualVerification(JSON.parse(text), data); }
-    catch { throw new CreativeVerificationError("invalid_response", "Meta returned invalid findings or mismatched rule IDs. No verification was saved."); }
+    catch (error) {
+      console.warn("Meta verification validation failed", error instanceof z.ZodError ? error.issues.map((i) => ({ path: i.path, code: i.code })) : error instanceof SyntaxError ? "Invalid JSON" : error instanceof Error && ["Invalid verification rule IDs", "Mismatched verification criterion"].includes(error.message) ? error.message : "Invalid findings");
+      throw new CreativeVerificationError("invalid_response", "Meta returned invalid findings or mismatched rule IDs. No verification was saved.");
+    }
     const checks = deterministicFindings(data).map((f) => f.rule_id === "system:claims" || f.rule_id === "system:typography" ? { ...f, evidence: visual.observed_text.map((t) => `Model-observed image text (not certified OCR): ${t}`) } : f);
     const findings = [...visual.findings, ...checks];
     const verification = LiveVerificationSchema.parse({ id: crypto.randomUUID(), assetId: data.asset.id, source: "live", overall: aggregateVerification(findings), findings,
