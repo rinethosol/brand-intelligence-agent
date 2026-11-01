@@ -38,7 +38,7 @@ export function CorrectionRunView({ run, detailed = false }: { run: CorrectionRu
   const remaining = final?.findings.filter((f) => f.status === "REVISE") ?? [];
   const review = final?.findings.filter((f) => f.status === "NEEDS_REVIEW") ?? [];
   return <div className="space-y-6">
-    <div role="status" className="flex flex-wrap items-center gap-3 border-y border-border py-4"><StatusBadge status={run.finalStatus} /><span className="text-sm">{run.attempts.length} correction attempts · {run.stopReason.replaceAll("_", " ")}</span><span className="text-xs text-muted-foreground">Targeted regeneration · not direct image editing</span></div>
+    <div role="status" className="flex flex-wrap items-center gap-3 border-y border-border py-4"><StatusBadge status={run.finalStatus} /><span className="text-sm">{run.attempts.length} of max {run.maxAttempts} correction rounds · stopped: {run.stopReason.replaceAll("_", " ")}</span><span className="text-xs text-muted-foreground">Targeted regeneration · not direct image editing</span></div>
     {run.error && <p role="alert" className="text-sm text-destructive">{run.error}</p>}
     <div className="grid gap-6 md:grid-cols-2"><ImageRecord asset={run.original} title="Original" /><ImageRecord asset={latest} title="Latest creative" /></div>
     <div className="grid gap-6 md:grid-cols-3">

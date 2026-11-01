@@ -224,5 +224,5 @@ export type CorrectionRun = {
   id: string; startedAt: string; completedAt: string; original: GeneratedCreative | null;
   originalVerification: LiveVerification | null; attempts: CorrectionAttempt[]; events: CorrectionEvent[];
   finalStatus: VerificationStatus; stopReason: "no_actionable_violations" | "no_improvement" | "maximum_attempts" | "api_failure";
-  error: string | null; label: string;
+  error: string | null; label: string; maxAttempts: number;
 };
