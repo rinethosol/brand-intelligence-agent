@@ -29,22 +29,22 @@ function unconfigured(provider: string, envVar: string): never {
 }
 
 export function getReasoningProvider(): ReasoningProvider {
-  if (!process.env.META_MUSE_SPARK_API_KEY) return { planRevision: () => unconfigured("Meta Muse Spark", "META_MUSE_SPARK_API_KEY") };
+  if (!process.env["META_MUSE_SPARK_API_KEY"]) return { planRevision: () => unconfigured("Meta Muse Spark", "META_MUSE_SPARK_API_KEY") };
   return { planRevision: () => unconfigured("Meta Muse Spark adapter (not implemented)", "META_MUSE_SPARK_API_KEY") };
 }
 export function getImageProvider(): ImageProvider {
-  if (!process.env.META_IMAGE_API_KEY) return { generate: () => unconfigured("Meta image generation", "META_IMAGE_API_KEY") };
+  if (!process.env["META_IMAGE_API_KEY"]) return { generate: () => unconfigured("Meta image generation", "META_IMAGE_API_KEY") };
   return { generate: () => unconfigured("Meta image adapter (not implemented)", "META_IMAGE_API_KEY") };
 }
 export function getVerificationProvider(): VerificationProvider {
-  if (!process.env.BRAND_VERIFIER_API_KEY) return { verify: () => unconfigured("Brand verification service", "BRAND_VERIFIER_API_KEY") };
+  if (!process.env["BRAND_VERIFIER_API_KEY"]) return { verify: () => unconfigured("Brand verification service", "BRAND_VERIFIER_API_KEY") };
   return { verify: () => unconfigured("Verifier adapter (not implemented)", "BRAND_VERIFIER_API_KEY") };
 }
 
 export function providerStatus() {
   return [
-    { name: "Meta Muse Spark", role: "Reasoning & orchestration", envVar: "META_MUSE_SPARK_API_KEY", keyPresent: !!process.env.META_MUSE_SPARK_API_KEY },
-    { name: "Meta Image Generation", role: "Creative generation", envVar: "META_IMAGE_API_KEY", keyPresent: !!process.env.META_IMAGE_API_KEY },
-    { name: "Brand Verification Service", role: "Independent verification", envVar: "BRAND_VERIFIER_API_KEY", keyPresent: !!process.env.BRAND_VERIFIER_API_KEY },
+    { name: "Meta Muse Spark", role: "Reasoning & orchestration", envVar: "META_MUSE_SPARK_API_KEY", keyPresent: !!process.env["META_MUSE_SPARK_API_KEY"] },
+    { name: "Meta Image Generation", role: "Creative generation", envVar: "META_IMAGE_API_KEY", keyPresent: !!process.env["META_IMAGE_API_KEY"] },
+    { name: "Brand Verification Service", role: "Independent verification", envVar: "BRAND_VERIFIER_API_KEY", keyPresent: !!process.env["BRAND_VERIFIER_API_KEY"] },
   ];
 }
