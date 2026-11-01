@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { BrandProfileSchema, CreativeBriefSchema, BrandAnalysisInputSchema, GenerateCreativeInputSchema } from "./schemas";
+import { BrandProfileSchema, CreativeBriefSchema, BrandAnalysisInputSchema, GenerateCreativeInputSchema, VerifyCreativeInputSchema } from "./schemas";
 import { z } from "zod";
 
 export const analyzeBrand = createServerFn({ method: "POST" })
@@ -27,6 +27,17 @@ export const generateCreative = createServerFn({ method: "POST" })
     catch (error) {
       if (error instanceof CreativeGenerationError) return { ok: false as const, code: error.code, error: error.message };
       return { ok: false as const, code: "invalid_input", error: "Generation could not be completed. Check the brand guidelines and campaign brief." };
+    }
+  });
+
+export const verifyCreative = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => VerifyCreativeInputSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { verifyCreativeWithMeta, CreativeVerificationError } = await import("./providers.server");
+    try { return { ok: true as const, verification: await verifyCreativeWithMeta(data) }; }
+    catch (error) {
+      if (error instanceof CreativeVerificationError) return { ok: false as const, code: error.code, error: error.message };
+      return { ok: false as const, code: "invalid_input", error: "The original image, saved guidelines or generation record are invalid. No verification was saved." };
     }
   });
 

@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { VisualVerificationResponseSchema, type VerifyCreativeInput, type LiveRuleFinding, type VerificationStatus } from "./schemas";
 import { parseBrandAnalysis } from "./brand-analysis";
 import { CREATIVE_SIZES } from "./creative-generation";
@@ -63,7 +62,7 @@ export function parseVisualVerification(raw: unknown, input: VerifyCreativeInput
     if (/logo|typograph|font|hex|#[0-9a-f]{6}|factual|product claim|certif|manufactur|production record|document|human review|ambig|conflict/i.test(context)) {
       return reviewFinding(rule.id, rule.criterion, rule.source_guideline, finding.evidence, `${finding.explanation} This requirement cannot be reliably established from this image alone.`);
     }
-    if (!finding.evidence.length || (finding.status === "REVISE" && !finding.suggested_correction)) {
+    if (!finding.evidence.length || /cannot (verify|determine|confirm)|unable to|not (visible|verifiable)|insufficient|uncertain|unsupported|not possible/i.test(`${finding.explanation} ${finding.evidence.join(" ")}`) || (finding.status === "REVISE" && !finding.suggested_correction)) {
       return reviewFinding(rule.id, rule.criterion, rule.source_guideline, finding.evidence, "The visual response lacks sufficient supporting evidence or an actionable correction.");
     }
     return { ...finding, source_guideline: rule.source_guideline };
