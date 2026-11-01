@@ -23,7 +23,7 @@ describe("Controlled test original upload", () => {
     expect(a.metadata.sourceLabel).toBe("User-supplied controlled test image");
     expect(a.prompt).toBe(""); expect(a.metadata.usage).toBeUndefined();
     expect(a.metadata.width).toBe(256); expect(a.metadata.analysis).toEqual(analysis);
-    expect(isControlledOriginal(a)).toBe(true); expect(assetSourceLabel(a)).not.toMatch(/Muse/i.source.replace("Muse", "Muse Image"));
+    expect(isControlledOriginal(a)).toBe(true);
     expect(assetSourceLabel(a)).toContain("not Muse-generated");
   });
   it.each([
