@@ -86,8 +86,8 @@ A corrected rule must become `PASS`; downgrading a violation to uncertainty is n
 Prerequisites: Node.js **22.12+** (tested here with 22.23.4), Bun (tested with 1.4.4), network access to the package registry, and Meta model access for live calls. `bun.lock` is the reproducible dependency lockfile; use Bun rather than generating a second lockfile.
 
 ```sh
-git clone YOUR_REPOSITORY_URL
-cd YOUR_REPOSITORY_DIRECTORY
+git clone https://github.com/rinethosol/brand-intelligence-agent
+cd brand-intelligence-agent
 bun install --frozen-lockfile
 cp .env.example .env.local
 # Replace placeholders locally; never commit private values.
@@ -98,7 +98,7 @@ Use the local address printed by Vite; the Lovable workspace preview runs on por
 
 The existing global auth-attacher initializes the generated Cloud client for RPC calls, so local development also requires your own public `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` values even though these workflows do not read private saved records. `.env.example` documents optional SSR counterparts and legacy/helper-only variables. No admin/service-role key is needed; it is not available through Lovable Cloud and must not be requested for this demo.
 
-**Repository hygiene:** a value-suppressed inspection of environment files in all accessible Git commits found public backend configuration and example placeholders, not private credentials. This is scoped evidence, not certification of all repository content. `.env` is platform-managed and tracked; `.gitignore` is platform read-only and excludes `*.local` and `.dev.vars`, but not every `.env.*` name. Keep local credentials in ignored `.env.local`; use the secret store in Lovable. Example placeholders are intentionally unusable. A fresh deep scan is running.
+**Repository hygiene:** a value-suppressed inspection of environment files in all accessible Git commits found public backend configuration and example placeholders, not private credentials. This is scoped evidence, not certification of all repository content. `.env` is platform-managed and tracked; `.gitignore` is platform read-only and excludes `*.local` and `.dev.vars`, but not every `.env.*` name. Keep local credentials in ignored `.env.local`; use the secret store in Lovable. Example placeholders are intentionally unusable. A deep security scan completed on November 1, 2026 with no findings; its individual checks were recorded as not up to date, so a final scan before submission is advisable.
 
 ### Tests and production build
 
@@ -107,7 +107,16 @@ bun run test
 bun run build
 ```
 
-The build uses the existing `@lovable.dev/vite-tanstack-config` and Cloudflare-targeted server setup; retain its plugins and server entry. The Lovable editor runs build/type checks automatically. This preparation did **not** manually execute a production build: see [SUBMISSION_READINESS.md](SUBMISSION_READINESS.md) for precise validation status. A frozen-lockfile install succeeded in a clean source copy without `.env` or repository metadata.
+The build uses the existing `@lovable.dev/vite-tanstack-config` and Cloudflare-targeted server setup; retain its plugins and server entry. The Lovable editor runs build/type checks automatically.
+
+Latest reported validation (November 1, 2026):
+
+- Clean production build: **PASS**, executed separately from the editor preview.
+- Existing regression tests: 70 PASS. New request-size boundary tests: 7 PASS. **Total: 77/77 PASS.**
+- Dependency audit: 11 of 12 flagged vulnerability entries resolved with targeted overrides; the remaining entry is this application's direct Zod 3 dependency, which is not fully patched but is mitigated by server-side request-size limits that reject oversized payloads before schema parsing.
+- Quick security scan: no issues. A deep security scan also completed with no findings, though its checks were recorded as not up to date and may predate the final wording fixes.
+
+These 77 checks are automated regression and boundary tests; they do not call Meta. Live Meta analysis, generation, verification and correction were exercised on November 1 **before** the dependency changes, and no new live Meta calls were executed afterward. See [SUBMISSION_READINESS.md](SUBMISSION_READINESS.md) for precise validation status.
 
 ## Demo walkthrough
 
@@ -126,9 +135,9 @@ See [DEMO_SCRIPT.md](DEMO_SCRIPT.md) for a timed recording script and prerequisi
 - Long sequential correction requests can exceed hosting request limits; no durable background job or recovery mechanism exists.
 - PNG checks are limited; visual judgments are fallible, not certified OCR, palette, logo or factual-claim proof.
 - Text-only regeneration may change composition or add unsupplied copy. Model output is not approval.
-- Legacy unconfigured agent interfaces remain alongside the live path; they are not used by the working correction screen. No code cleanup or dependency update was performed during this review.
+- Legacy unconfigured agent interfaces remain alongside the live path; they are not used by the working correction screen. Targeted dependency overrides and server-side request-size limits were applied on November 1; broader code cleanup and a direct Zod upgrade remain open.
 - Dashboard/Studio wording now distinguishes live outputs and mock previews; the historical hand-written demo aggregate remains unchanged to preserve verification logic. Broader cleanup and source hygiene limitations are documented in the readiness report.
-- Repository visibility, publishing and submission completion are unverified.
+- The GitHub repository is public at [github.com/rinethosol/brand-intelligence-agent](https://github.com/rinethosol/brand-intelligence-agent) and remains connected to Lovable's two-way Git sync; publishing the running app and completing the hackathon submission remain separate pending steps.
 
 ## Hackathon development disclosure
 
