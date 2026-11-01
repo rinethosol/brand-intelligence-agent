@@ -41,7 +41,9 @@ describe("Meta brand analysis (mocked contract tests, not live evidence)", () =>
     const result = await analyzeBrandWithMeta(demoProfile);
     expect(result.analysis).toEqual(analysis);
     expect(result).not.toHaveProperty("raw");
-    const [url, init] = fetchMock.mock.calls[0];
+    const call = fetchMock.mock.calls[0];
+    if (!call) throw new Error("Expected Meta request");
+    const [url, init] = call;
     expect(url).toBe("https://api.meta.ai/v1/responses");
     const body = JSON.parse(init.body);
     expect(body.model).toBe("muse-spark-1.3");
