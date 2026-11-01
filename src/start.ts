@@ -1,6 +1,7 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { HTTP_BODY_LIMIT_BYTES, oversizedContentLength } from "./lib/agent/request-limits";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
@@ -25,7 +26,20 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+// Rejects oversized server-function bodies from the declared length before the
+// payload is read or deserialized.
+const bodySizeMiddleware = createMiddleware().server(async ({ request, next }) => {
+  if (request.method === "POST" && new URL(request.url).pathname.includes("/_serverFn/")
+      && oversizedContentLength(request.headers.get("content-length"), HTTP_BODY_LIMIT_BYTES)) {
+    return new Response(JSON.stringify({ ok: false, code: "request_too_large", error: "Request is too large. Nothing was processed." }), {
+      status: 413,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  return next();
+});
+
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware, csrfMiddleware],
+  requestMiddleware: [errorMiddleware, bodySizeMiddleware, csrfMiddleware],
 }));
