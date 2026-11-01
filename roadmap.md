@@ -18,3 +18,8 @@
 - [x] Add evidence-gated targeted revision planning and bounded independent reverification.
 - [x] Connect before/after comparison, timeline, approval and downloadable report/assets.
 - [x] Test safety rules and complete a genuine controlled correction cycle; document limitations.
+
+# Submission readiness
+- [ ] Audit source/setup, test results and available build/security evidence.
+- [ ] Prepare README, environment example, architecture documentation and timed demo script.
+- [ ] Report repository/demo readiness and remaining externally blocked submission requirements.
