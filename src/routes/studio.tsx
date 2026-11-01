@@ -18,9 +18,9 @@ export const Route = createFileRoute("/studio")({
   head: () => ({
     meta: [
       { title: "Creative Studio — Brand Intelligence Agent" },
-      { name: "description", content: "Write a campaign brief and generate brand-verified creative." },
+      { name: "description", content: "Write a campaign brief and generate creative for independent brand verification." },
       { property: "og:title", content: "Creative Studio" },
-      { property: "og:description", content: "Turn a campaign brief into verified creative." },
+      { property: "og:description", content: "Generate original campaign images; compliance requires independent verification and human review." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

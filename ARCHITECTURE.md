@@ -88,7 +88,7 @@ Completed-run events record stage, timestamp, attempt, model, relevant rule IDs 
 
 Credentials are read inside server adapters. Provider outputs are checked for credential echoes; endpoints/model IDs are fixed. Browser-visible `VITE_` values are public configuration only. An unused generated administrative client exists; active agent flows do not use it and require no admin key.
 
-These are source-described boundaries, **not a completed security audit**. The available scan result is a stale supply-chain scan with no findings; no recent deep-scan result was available. Run a scan from the Security tab. The repository currently tracks `.env`; contents and historical credential exposure remain unverified. Do not place confidential brand information or secrets in submitted profiles/briefs or downloaded metadata; those inputs reach Meta and generation records expose their prompt locally.
+These are source-described boundaries, **not a completed security audit**. Fresh basic checks found no issues; the requested deep scan is running. A value-suppressed inspection of accessible environment-file history found public configuration and placeholders, not private credentials. This does not certify other repository content. The platform-managed `.env` is tracked and `.gitignore` cannot be edited here; local secrets belong in ignored `.env.local` or the secret store. Do not place confidential brand information or secrets in submitted profiles/briefs or downloaded metadata; those inputs reach Meta and generation records expose their prompt locally.
 
 ## Session-only retention and provenance
 
