@@ -19,6 +19,8 @@ export const Route = createFileRoute("/studio")({
       { name: "description", content: "Write a campaign brief and generate brand-verified creative." },
       { property: "og:title", content: "Creative Studio" },
       { property: "og:description", content: "Turn a campaign brief into verified creative." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Studio,

@@ -12,6 +12,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "AI workspace that turns brand identity into verified, self-corrected marketing creative." },
       { property: "og:title", content: "Brand Intelligence Agent" },
       { property: "og:description", content: "From Brand Identity to Verified Creative." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Dashboard,

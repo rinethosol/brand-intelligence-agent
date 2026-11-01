@@ -12,6 +12,8 @@ export const Route = createFileRoute("/report")({
       { name: "description", content: "Brand summary, criteria, violations, correction history and human approval." },
       { property: "og:title", content: "Verification Report" },
       { property: "og:description", content: "The audit trail behind every verified creative." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Report,
