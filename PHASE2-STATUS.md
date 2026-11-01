@@ -1,5 +1,7 @@
 # Phase 2 status — November 1, 2026
 
+> This file is a chronological milestone record. Older “deferred” or “not implemented” statements describe that milestone's date, not the current application. For current release checks and blockers, read `SUBMISSION_READINESS.md`; Milestone 4 below records the latest real correction evidence.
+
 ## Milestone 4: bounded autonomous correction — November 1, 2026
 - Added public same-origin CSRF-protected POST `runCorrectionLoop`. Its server-only `executeCorrectionLoop` reuses exactly the generation and verification adapters behind `generateCreative` and `verifyCreative`, rather than nesting RPC calls. Existing brand analysis, generation and independent verification are preserved.
 - Added `planRevisionWithMeta`: a separate Muse Spark 1.3 Responses invocation inspects the actual previous PNG plus profile, original brief, rules and independent findings. Strict JSON-schema output has targeted changes and all passing attributes to preserve; shared validation rejects missing, duplicate, ineligible or unrelated rule IDs. No generator prompt is sent to the verifier or planner.
