@@ -1,5 +1,24 @@
 # Submission readiness — November 1, 2026
 
+## Approved follow-up — 21:40 UTC
+
+This section supersedes earlier unverified environment/label statements below; prior audit details are retained as history.
+
+| Requested item | Status | Evidence / remaining action |
+| --- | --- | --- |
+| Environment history | PASS (scoped) | Inspected tracked environment files across all accessible commits without printing values. Only public backend configuration and example placeholders were found; no private credential detected. This does not certify arbitrary secrets outside environment files or inaccessible history. No rotation or Git rewrite performed. |
+| Local secret exclusions | WARNING | Existing `*.local` and `.dev.vars` exclusions cover recommended local secrets. `.gitignore` is platform read-only; adding broader `.env`/`.env.*` exclusions was refused and not bypassed. Managed `.env` remains tracked public config. |
+| Example environment | PASS | Six assignments contain placeholders only. |
+| Fresh security review | WARNING / pending | Fresh basic scan reported no issues. Deep scan started before edits and runs asynchronously; code/log/assets/repository findings and severities must await that result. No security guarantee. |
+| Clean install | PASS | Previous isolated `bun install --frozen-lockfile` succeeded (545 packages), followed by all 70 tests. No dependency changes since. |
+| Production build | BLOCKED for independent execution | Managed-editor instructions prohibit manual project builds/typechecks. Automatic build evidence is checked separately; no clean production build claim. Release check command remains `bun run build`. |
+| Demo labeling | PASS (requested wording) | Removed obsolete dashboard correction/report demo-only statement and corrected Studio verification-before-inspection metadata. Layout, existing demo fixtures, models and business logic unchanged. |
+| Documentation | PASS | README and architecture reconciled with scoped environment inspection and fresh scan state. Demo script already explicitly labels recorded controlled results, regeneration and NEEDS_REVIEW. |
+| Regression checks | PASS (automated) | `bun run test` at 21:40 UTC: 70 tests / 6 files passed. Provider failure warnings are expected mocked cases. No paid Meta call triggered; existing live evidence remains historical, not newly revalidated. |
+| External release | BLOCKED / unverified | Repository visibility, video upload and hackathon submission not checked or claimed complete. |
+
+Changes in this follow-up: dashboard and Studio wording/metadata, README, ARCHITECTURE, this report and roadmap. No destructive change, rotation, Git history operation, verification-rule change or dependency update occurred. The attempted `.gitignore` edit was rejected by platform file protection.
+
 ## Executive decision
 
 **Documentation prepared; automated tests and clean dependency installation pass. Not yet a verified final submission.** The existing UI and runtime behavior were left unchanged. No dependencies, credentials, generated integration files or repository history were modified.

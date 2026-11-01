@@ -23,7 +23,7 @@
 - [x] Audit source/setup, test results and available build/security evidence.
 - [x] Prepare README, environment example, architecture documentation and timed demo script.
 - [x] Report repository/demo readiness and remaining externally blocked submission requirements.
-- [ ] Apply confirmed live/demo truthfulness fixes — awaiting user approval under code-review workflow.
+- [x] Correct dashboard/Studio live/demo wording without changing layout or verification logic.
 - [ ] Verify clean production build — managed editor prohibits manual builds; needs release-environment execution.
-- [ ] Certify credential/history hygiene — awaiting recent Security-tab deep scan and approved remediation.
+- [ ] Complete security review — basic scan passed; deep scan running. No private credentials detected in accessible environment history; ignore file is platform read-only.
 - [ ] Verify demo video, repository access and completed submission — requires recording/upload/access details not yet supplied.

@@ -98,7 +98,7 @@ Use the local address printed by Vite; the Lovable workspace preview runs on por
 
 The existing global auth-attacher initializes the generated Cloud client for RPC calls, so local development also requires your own public `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` values even though these workflows do not read private saved records. `.env.example` documents optional SSR counterparts and legacy/helper-only variables. No admin/service-role key is needed; it is not available through Lovable Cloud and must not be requested for this demo.
 
-**Repository hygiene caveat:** the audit found `.env` tracked. Its contents were not inspected or certified as credential-free. This prevents claiming all repository history is free of credentials. Review with the Security tab and approve repository hygiene changes before publishing source; `.env.local` is ignored. Example placeholders are intentionally unusable.
+**Repository hygiene:** a value-suppressed inspection of environment files in all accessible Git commits found public backend configuration and example placeholders, not private credentials. This is scoped evidence, not certification of all repository content. `.env` is platform-managed and tracked; `.gitignore` is platform read-only and excludes `*.local` and `.dev.vars`, but not every `.env.*` name. Keep local credentials in ignored `.env.local`; use the secret store in Lovable. Example placeholders are intentionally unusable. A fresh deep scan is running.
 
 ### Tests and production build
 
@@ -127,7 +127,7 @@ See [DEMO_SCRIPT.md](DEMO_SCRIPT.md) for a timed recording script and prerequisi
 - PNG checks are limited; visual judgments are fallible, not certified OCR, palette, logo or factual-claim proof.
 - Text-only regeneration may change composition or add unsupplied copy. Model output is not approval.
 - Legacy unconfigured agent interfaces remain alongside the live path; they are not used by the working correction screen. No code cleanup or dependency update was performed during this review.
-- Stale dashboard/demo wording and source hygiene issues are documented for approval, not silently fixed.
+- Dashboard/Studio wording now distinguishes live outputs and mock previews; the historical hand-written demo aggregate remains unchanged to preserve verification logic. Broader cleanup and source hygiene limitations are documented in the readiness report.
 - Repository visibility, publishing and submission completion are unverified.
 
 ## Hackathon development disclosure
