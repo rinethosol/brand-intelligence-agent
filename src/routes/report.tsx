@@ -1,9 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Check, X } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Check, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader, Panel, StatusBadge, CreativeMock, DemoNotice, CriterionCard } from "@/components/app/ui-bits";
-import { demoAssets, demoVerifications } from "@/lib/agent/demo-data";
-import { setWorkspace, useWorkspace } from "@/lib/agent/store";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { PageHeader, Panel } from "@/components/app/ui-bits";
+import { CorrectionRunView } from "@/components/app/CorrectionRunView";
+import { approveCorrectionRun, useWorkspace } from "@/lib/agent/store";
+import { correctionReport } from "@/lib/agent/correction";
 
 export const Route = createFileRoute("/report")({
   head: () => ({
@@ -19,47 +22,23 @@ export const Route = createFileRoute("/report")({
   component: Report,
 });
 
+
 function Report() {
-  const { profile, brief, approval } = useWorkspace();
-  const final = demoVerifications[demoVerifications.length - 1]!;
-  const finalAsset = demoAssets[demoAssets.length - 1]!;
-  return (
-    <div>
-      <PageHeader eyebrow="Step 05" title="Verification Report" description={`${profile.name} · ${brief.objective}`} />
-      <DemoNotice>Report assembled from demo data. Approval status is stored only in this browser session.</DemoNotice>
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6">
-          <Panel title="Brand identity summary">
-            <p className="font-semibold text-foreground">{profile.name}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{profile.description}</p>
-            <div className="mt-3 flex gap-2">{profile.colors.map((c) => <div key={c} className="h-6 w-6 rounded border border-border" style={{ background: c }} title={c} />)}</div>
-            <p className="mt-3 text-sm text-foreground">{profile.personality.join(" · ")}</p>
-          </Panel>
-          <Panel title="Creative preview"><CreativeMock asset={finalAsset} profile={profile} headline={brief.message} /></Panel>
-          <Panel title="Final result"><StatusBadge status={final.overall} large /></Panel>
-          <Panel title="Human approval">
-            <p className="mb-4 text-sm capitalize text-foreground">Status: <span className={approval === "approved" ? "text-success" : approval === "rejected" ? "text-destructive" : "text-warning"}>{approval}</span></p>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => setWorkspace({ approval: "approved" })}><Check className="mr-1 h-4 w-4" />Approve</Button>
-              <Button size="sm" variant="secondary" onClick={() => setWorkspace({ approval: "rejected" })}><X className="mr-1 h-4 w-4" />Reject</Button>
-            </div>
-          </Panel>
-        </div>
-        <div className="space-y-6 lg:col-span-2">
-          <Panel title="Verification criteria"><div className="space-y-3">{final.criteria.map((c) => <CriterionCard key={c.key} c={c} />)}</div></Panel>
-          <Panel title="Detected violations & correction history">
-            <ol className="space-y-4">
-              {demoVerifications.map((v, i) => (
-                <li key={v.id} className="rounded-lg border border-border p-4">
-                  <div className="flex items-center justify-between"><p className="font-medium text-foreground">Iteration {i + 1}</p><StatusBadge status={v.overall} /></div>
-                  <p className="mt-1 text-xs text-muted-foreground">Prompt: {demoAssets[i]?.prompt}</p>
-                  {v.violations.length ? <ul className="mt-2 list-disc pl-4 text-sm text-destructive">{v.violations.map((x) => <li key={x}>{x}</li>)}</ul> : <p className="mt-2 text-sm text-success">No violations detected</p>}
-                </li>
-              ))}
-            </ol>
-          </Panel>
-        </div>
-      </div>
-    </div>
-  );
+  const { correctionRuns, runApprovals } = useWorkspace();
+  const [selected, setSelected] = useState<string | null>(null);
+  const run = correctionRuns.find((r) => r.id === selected) ?? correctionRuns.at(-1);
+  const approval = run ? runApprovals[run.id] ?? "pending" : "pending";
+  function downloadReport() {
+    if (!run) return;
+    const url = URL.createObjectURL(new Blob([JSON.stringify(correctionReport(run, approval), null, 2)], { type: "application/json" }));
+    const a = document.createElement("a"); a.href = url; a.download = `${run.id}-correction-report.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  return <div>
+    <PageHeader eyebrow="Step 05" title="Verification Report" description={run ? run.label : "No live correction report in this session"} />
+    {run ? <>
+      <div className="mb-6 flex flex-wrap items-center gap-3"><Select value={run.id} onValueChange={setSelected}><SelectTrigger className="w-full sm:w-96"><SelectValue /></SelectTrigger><SelectContent>{correctionRuns.map((r,i) => <SelectItem key={r.id} value={r.id}>Run {i+1} · {r.label}</SelectItem>)}</SelectContent></Select><Button variant="outline" onClick={downloadReport}><Download className="mr-2 h-4 w-4" />Download report</Button></div>
+      <Panel title="Human approval" className="mb-6"><p className="mb-3 text-sm">Decision: <span className="capitalize">{approval}</span> · independent of the AI verdict</p><div className="flex gap-2"><Button size="sm" onClick={() => approveCorrectionRun(run.id, "approved")}><Check className="mr-2 h-4 w-4" />Approve</Button><Button size="sm" variant="secondary" onClick={() => approveCorrectionRun(run.id, "rejected")}><X className="mr-2 h-4 w-4" />Reject</Button></div></Panel>
+      <CorrectionRunView run={run} detailed />
+    </> : <div className="border-y border-border py-8"><p className="mb-4 text-muted-foreground">No completed correction run. Reports and approval decisions are retained only in this session.</p><Button asChild><Link to="/correction">Open Self-Correction</Link></Button></div>}
+  </div>;
 }

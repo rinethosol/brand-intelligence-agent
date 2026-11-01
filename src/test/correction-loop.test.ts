@@ -1,0 +1,58 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { demoBrief, demoProfile } from "@/lib/agent/demo-data";
+import type { GeneratedCreative, LiveVerification, LiveRuleFinding } from "@/lib/agent/schemas";
+import { executeCorrectionLoop, type CorrectionProviders } from "@/lib/agent/correction.server";
+import { actionableViolations, compareVerifications, correctionReport } from "@/lib/agent/correction";
+import { inspectOriginalPng } from "@/lib/agent/creative-verification";
+import { generateCreativeWithMeta, planRevisionWithMeta } from "@/lib/agent/providers.server";
+
+const imageUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a8XsAAAAASUVORK5CYII=";
+const analysis = { brand_name: demoProfile.name, brand_personality: demoProfile.personality, approved_colors: demoProfile.colors, prohibited_elements: demoProfile.forbiddenElements,
+  verification_rules: ["a", "b", "c", "d"].map((id) => ({ id, criterion: id, expected_result: "No fantasy scenery", verification_method: "Visual inspection", source_guideline: "Real landscapes, no fantasy scenery" })) };
+const original: GeneratedCreative = { id: "original", briefId: demoBrief.id, iteration: 1, imageUrl, prompt: "private-generator-prompt", source: "live",
+  metadata: { model: "muse-image-1.0", endpoint: "https://api.meta.ai/v1/images/generations", created: 1784584435, completedAt: "2026-11-01T21:00:00Z", requestedSize: "1024x1024", width: 1, height: 1, outputFormat: "png", profile: demoProfile, brief: demoBrief, analysis, verificationStatus: "NEEDS_REVIEW", logoStatus: "requires_verification_or_post_processing", textStatus: "requires_verification_or_post_processing" } };
+const input = { original, analysis };
+function finding(id: string, status: LiveRuleFinding["status"]): LiveRuleFinding { return { rule_id: id, criterion: id, status, evidence: ["Floating fantasy rock visible in upper center"], explanation: "A visible fantasy object contradicts the rule", suggested_correction: status === "REVISE" ? "Remove floating rocks; keep the realistic forest" : null, verification_method: "Meta image understanding", source_guideline: "Real landscapes, no fantasy scenery" }; }
+async function verification(asset: GeneratedCreative, statuses: LiveRuleFinding["status"][]) {
+  const findings = statuses.map((s,i) => finding(["a","b","c","d"][i] ?? "a", s));
+  return { id: crypto.randomUUID(), assetId: asset.id, source: "live", overall: statuses.includes("REVISE") ? "REVISE" : statuses.includes("NEEDS_REVIEW") ? "NEEDS_REVIEW" : "PASS", findings, imageObservations: ["Forest"], observedText: [], verifiedAt: new Date().toISOString(), model: "muse-spark-1.3", endpoint: "https://api.meta.ai/v1/responses", method: "Independent image understanding plus deterministic PNG checks", imageSha256: Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", inspectOriginalPng(asset.imageUrl).bytes)), (b) => b.toString(16).padStart(2,"0")).join(""), responseId: "response", analysis } satisfies LiveVerification;
+}
+function providers(sequence: LiveRuleFinding["status"][][]) {
+  let i = 0;
+  return { generate: vi.fn(async (_input, revision) => ({ ...structuredClone(original), id: "revision-" + revision?.attempt, iteration: (revision?.attempt ?? 0) + 1 })),
+    verify: vi.fn(async ({ asset }) => verification(asset, sequence[i++] ?? ["REVISE"])),
+    plan: vi.fn(async ({ verification: result }: { asset: GeneratedCreative; verification: LiveVerification }) => ({ plan: { changes: actionableViolations(result).map((f) => ({ rule_id: f.rule_id, instruction: f.suggested_correction ?? "Remove" })), preserve: result.findings.filter((f) => f.status === "PASS").map((f) => ({ rule_id: f.rule_id, attribute: "Keep compliant forest" })), rationale: "Target verified violations only" }, responseId: "planner-response", plannedAt: new Date().toISOString() })) } satisfies CorrectionProviders;
+}
+afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.useRealTimers(); });
+describe("Bounded correction safety", () => {
+  it("PASS requires no correction", async () => { const p = providers([["PASS"]]); const r = await executeCorrectionLoop(input,p); expect(r.finalStatus).toBe("PASS"); expect(r.attempts).toHaveLength(0); expect(p.generate).not.toHaveBeenCalled(); });
+  it("NEEDS_REVIEW alone requires no correction", async () => { const p=providers([["NEEDS_REVIEW"]]); const r=await executeCorrectionLoop(input,p); expect(r.finalStatus).toBe("NEEDS_REVIEW"); expect(p.plan).not.toHaveBeenCalled(); expect(r.attempts).toHaveLength(0); });
+  it("evidenced REVISE triggers correction and independent reverification", async () => { const p=providers([["REVISE","PASS"],["PASS","PASS"]]); const r=await executeCorrectionLoop(input,p); expect(r.attempts).toHaveLength(1); expect(p.verify).toHaveBeenCalledTimes(2); expect(r.attempts[0]?.correctedRuleIds).toEqual(["a"]); expect(r.finalStatus).toBe("PASS"); });
+  it("allows maximum three attempts AFTER the original", async () => { const p=providers([["REVISE","REVISE","REVISE","REVISE"],["PASS","REVISE","REVISE","REVISE"],["PASS","PASS","REVISE","REVISE"],["PASS","PASS","PASS","REVISE"]]); const r=await executeCorrectionLoop(input,p); expect(r.attempts).toHaveLength(3); expect(p.generate).toHaveBeenCalledTimes(3); expect(p.verify).toHaveBeenCalledTimes(4); expect(r.stopReason).toBe("maximum_attempts"); expect(r.finalStatus).toBe("REVISE"); });
+  it("stops when no meaningful improvement occurs", async () => { const p=providers([["REVISE"],["REVISE"]]); const r=await executeCorrectionLoop(input,p); expect(r.stopReason).toBe("no_improvement"); expect(r.attempts).toHaveLength(1); });
+  it("does not count downgrade to uncertainty as improvement", async () => { const a=await verification(original,["REVISE"]); const b=await verification(original,["NEEDS_REVIEW"]); expect(compareVerifications(a,b).improved).toBe(false); expect(compareVerifications(a,b).correctedRuleIds).toEqual([]); });
+  it("stops when a compliant rule regresses", async () => { const p=providers([["REVISE","PASS"],["PASS","NEEDS_REVIEW"]]); const r=await executeCorrectionLoop(input,p); expect(r.stopReason).toBe("no_improvement"); expect(r.finalStatus).toBe("NEEDS_REVIEW"); });
+  it("failed regeneration stops safely without leaking exception details", async () => { const p=providers([["REVISE"]]); p.generate.mockRejectedValue(new Error("SECRET-provider-body")); const r=await executeCorrectionLoop(input,p); expect(r.stopReason).toBe("api_failure"); expect(r.original).toEqual(original); expect(r.attempts[0]?.asset).toBeNull(); expect(JSON.stringify(r)).not.toContain("SECRET-provider-body"); });
+  it("failed reverification preserves new image but never inherits original verdict", async () => { const p=providers([["REVISE"]]); p.verify.mockImplementationOnce(async ({asset}) => verification(asset,["REVISE"])).mockRejectedValueOnce(new Error("offline")); const r=await executeCorrectionLoop(input,p); expect(r.finalStatus).toBe("NEEDS_REVIEW"); expect(r.attempts[0]?.asset).not.toBeNull(); expect(r.attempts[0]?.verification).toBeNull(); expect(r.stopReason).toBe("api_failure"); });
+  it("failed original generation stops without fabricated images", async () => { const p=providers([]); p.generate.mockRejectedValue(new Error("offline")); const r=await executeCorrectionLoop({generation:{profile:demoProfile,brief:demoBrief,analysis},analysis},p); expect(r.original).toBeNull(); expect(p.verify).not.toHaveBeenCalled(); });
+  it("failed original verification never triggers planning", async () => { const p=providers([]); p.verify.mockRejectedValue(new Error("offline")); const r=await executeCorrectionLoop(input,p); expect(r.finalStatus).toBe("NEEDS_REVIEW"); expect(r.originalVerification).toBeNull(); expect(p.plan).not.toHaveBeenCalled(); });
+  it("original bytes and metadata are preserved", async () => { const before=JSON.stringify(original); const r=await executeCorrectionLoop(input,providers([["REVISE"],["PASS"]])); expect(JSON.stringify(original)).toBe(before); expect(r.original?.imageUrl).toBe(imageUrl); expect(r.original?.id).toBe("original"); expect(r.attempts[0]?.asset?.id).toBe("revision-1"); });
+  it("rejects mismatched image verification provenance", async () => { const p=providers([]); p.verify.mockImplementation(async ({asset}) => ({...await verification(asset,["REVISE"]),imageSha256:"wrong"})); const r=await executeCorrectionLoop(input,p); expect(p.plan).not.toHaveBeenCalled(); expect(r.stopReason).toBe("api_failure"); });
+  it("ineligible evidence, review methods and metadata mismatches never trigger regeneration", async () => { const v=await verification(original,["REVISE"]); for (const change of [{ evidence: [] },{ suggested_correction: null },{ verification_method: "Human review required" as const },{ explanation: "Unverified claim" },{rule_id:"system:dimensions"}]) expect(actionableViolations({...v,findings:[{...v.findings[0],...change} as LiveRuleFinding]})).toHaveLength(0); });
+  it("reports retain independent approval and omit generator prompts", async () => { const r=await executeCorrectionLoop(input,providers([["NEEDS_REVIEW"]])); const report=correctionReport(r,"approved"); expect(report.humanApproval).toBe("approved"); expect(report.finalStatus).toBe("NEEDS_REVIEW"); expect(JSON.stringify(report)).not.toContain("private-generator-prompt"); });
+  it("planner uses correct model and exact image, rejects credential echo", async () => {
+    vi.stubEnv("META_MODEL_API_KEY","test-secret-key"); const v=await verification(original,["REVISE","PASS"]);
+    const output={changes:[{rule_id:"a",instruction:"Remove floating rock"}],preserve:[{rule_id:"b",attribute:"Preserve forest"}],rationale:"Remove fantasy only"};
+    const envelope=(data:unknown)=>({id:"planner",status:"completed",output:[{type:"message",role:"assistant",status:"completed",content:[{type:"output_text",text:JSON.stringify(data)}]}]});
+    const mock=vi.fn().mockResolvedValue(Response.json(envelope(output))); vi.stubGlobal("fetch",mock);
+    const result=await planRevisionWithMeta({asset:original,verification:v}); const sent=JSON.parse(mock.mock.calls[0]?.[1].body);
+    expect(sent.model).toBe("muse-spark-1.3"); expect(sent.input[0].content[1].image_url).toBe(imageUrl); expect(JSON.stringify(result)).not.toContain("test-secret-key");
+    mock.mockResolvedValue(Response.json(envelope({...output,rationale:"test-secret-key"}))); await expect(planRevisionWithMeta({asset:original,verification:v})).rejects.toThrow();
+  });
+  it("corrected generation reuses Muse Image and original brief with targeted plan", async () => {
+    vi.stubEnv("META_MODEL_API_KEY","test-secret-key"); const mock=vi.fn().mockResolvedValue(Response.json({created:1784584435,output_format:"png",data:[{b64_json:imageUrl.split(",")[1]}]})); vi.stubGlobal("fetch",mock);
+    const plan={changes:[{rule_id:"a",instruction:"Remove floating rock"}],preserve:[],rationale:"Targeted correction"};
+    const asset=await generateCreativeWithMeta({profile:demoProfile,brief:demoBrief,analysis},{plan,previous:original,attempt:1}); const sent=JSON.parse(mock.mock.calls[0]?.[1].body);
+    expect(sent.model).toBe("muse-image-1.0"); expect(sent.prompt).toContain("Remove floating rock"); expect(sent.prompt).toContain(demoBrief.message); expect(asset.iteration).toBe(2); expect(asset.id).not.toBe(original.id); expect(JSON.stringify(asset)).not.toContain("test-secret-key");
+  });
+});
