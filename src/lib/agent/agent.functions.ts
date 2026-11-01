@@ -1,6 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
-import { BrandProfileSchema, CreativeBriefSchema } from "./schemas";
+import { BrandProfileSchema, CreativeBriefSchema, BrandAnalysisInputSchema } from "./schemas";
 import { z } from "zod";
+
+export const analyzeBrand = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => BrandAnalysisInputSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { analyzeBrandWithMeta, BrandAnalysisError } = await import("./providers.server");
+    try {
+      return { ok: true as const, ...await analyzeBrandWithMeta(data) };
+    } catch (error) {
+      if (error instanceof BrandAnalysisError) return { ok: false as const, code: error.code, error: error.message };
+      return { ok: false as const, code: "unexpected_error", error: "Brand analysis failed. No analysis was saved." };
+    }
+  });
 
 export const getProviderStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { providerStatus } = await import("./providers.server");

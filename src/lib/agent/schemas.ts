@@ -18,6 +18,34 @@ export const BrandProfileSchema = z.object({
 });
 export type BrandProfile = z.infer<typeof BrandProfileSchema>;
 
+export const BrandAnalysisInputSchema = BrandProfileSchema.extend({
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().min(1, "Enter a brand description").max(5000),
+  industry: z.string().trim().min(1, "Enter an industry").max(200),
+  targetAudience: z.string().trim().min(1, "Enter a target audience").max(1000),
+  personality: z.array(z.string().trim().min(1).max(500)).min(1, "Enter brand personality").max(30),
+  colors: z.array(hexColor).min(1, "Enter at least one brand color").max(30),
+  guidelines: z.array(z.string().trim().min(1).max(2000)).min(1, "Enter at least one guideline").max(50),
+  forbiddenElements: z.array(z.string().trim().min(1).max(1000)).max(50),
+  logoUrl: z.string().max(2000).nullable(),
+});
+
+const analysisText = z.string().trim().min(1).max(4000);
+export const BrandAnalysisSchema = z.object({
+  brand_name: analysisText,
+  brand_personality: z.array(analysisText).max(30),
+  approved_colors: z.array(hexColor).max(30),
+  prohibited_elements: z.array(analysisText).max(50),
+  verification_rules: z.array(z.object({
+    id: z.string().min(1).max(100),
+    criterion: analysisText,
+    expected_result: analysisText,
+    verification_method: analysisText,
+    source_guideline: analysisText,
+  }).strict()).min(1).max(100),
+}).strict();
+export type BrandAnalysis = z.infer<typeof BrandAnalysisSchema>;
+
 export const CreativeFormat = z.enum(["instagram_post", "instagram_story", "facebook_feed", "display_banner"]);
 export type CreativeFormat = z.infer<typeof CreativeFormat>;
 
