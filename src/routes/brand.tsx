@@ -11,6 +11,7 @@ import { PageHeader, Panel, DemoBadge } from "@/components/app/ui-bits";
 import { BrandProfileSchema, BrandAnalysisInputSchema, type BrandAnalysis, type BrandProfile } from "@/lib/agent/schemas";
 import { analyzeBrand } from "@/lib/agent/agent.functions";
 import { setWorkspace, useWorkspace } from "@/lib/agent/store";
+import { profileFingerprint } from "@/lib/agent/creative-generation";
 
 export const Route = createFileRoute("/brand")({
   head: () => ({
@@ -43,6 +44,7 @@ function BrandPage() {
     setAnalysis(null);
     setRequestStatus("idle");
     setAnalysisError("");
+    setWorkspace({ analyzedBrand: null });
   }
 
   function readDraft(form: HTMLFormElement): BrandProfile {
@@ -73,6 +75,7 @@ function BrandPage() {
       if (version !== requestVersion.current) return;
       if (!result.ok) { setRequestStatus("error"); setAnalysisError(result.error); return; }
       setAnalysis(result.analysis);
+      setWorkspace({ analyzedBrand: { analysis: result.analysis, fingerprint: profileFingerprint(parsed.data) } });
       setRequestStatus("success");
     } catch {
       if (version !== requestVersion.current) return;
