@@ -10,6 +10,6 @@
 - [x] Test a real Halden Outdoor image and existing analysis; report confirmed results and blockers in PHASE2-STATUS.md.
 
 # Milestone 3: Independent verification
-- [ ] Verify official Meta image-understanding input contract.
-- [ ] Add independent verifyCreative with deterministic image checks, source-linked rule evidence and conservative uncertainty.
-- [ ] Connect live verification screen without automatic corrections; test original Halden image and report limitations.
+- [x] Verify official Meta image-understanding input contract.
+- [x] Add independent verifyCreative with deterministic image checks, source-linked rule evidence and conservative uncertainty.
+- [x] Connect live verification screen without automatic corrections; test original Halden image and report limitations in PHASE2-STATUS.md.

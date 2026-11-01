@@ -1,7 +1,7 @@
 /**
  * Server-only provider adapters. Credentials are read from process.env inside
  * handlers and never reach the browser. Brand analysis and single-shot image
- * generation are wired to Meta; revisions and independent verification are not.
+ * generation and independent image inspection are wired to Meta; revisions are not.
  */
 import type { BrandProfile, CreativeAsset, CreativeBrief, VerificationResult } from "./schemas";
 import { BrandAnalysisInputSchema } from "./schemas";

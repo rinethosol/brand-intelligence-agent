@@ -21,6 +21,7 @@ describe("Independent visual verification (mocked contract, not live evidence)",
     const sent = JSON.parse(call[1].body);
     expect(call[0]).toBe("https://api.meta.ai/v1/responses"); expect(sent.model).toBe("muse-spark-1.3");
     expect(sent.input[0].content[1]).toEqual({ type: "input_image", image_url: imageUrl });
+    expect(sent.text.format).toMatchObject({ type: "json_schema", strict: true, schema: { required: ["findings", "observed_text", "image_observations"] } });
     expect(call[1].body).not.toContain(input.asset.prompt);
     expect(result.assetId).toBe("original"); expect(result.imageSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(JSON.stringify(result)).not.toContain("verification-test-key"); expect(result.overall).toBe("NEEDS_REVIEW");
@@ -67,5 +68,17 @@ describe("Independent visual verification (mocked contract, not live evidence)",
   it("requires configured credentials", async () => {
     vi.stubEnv("META_MODEL_API_KEY",undefined); const mock=vi.fn(); vi.stubGlobal("fetch",mock);
     await expect(verifyCreativeWithMeta(input)).rejects.toMatchObject({code:"not_configured"}); expect(mock).not.toHaveBeenCalled();
+  });
+  it("handles network failure without fabricating findings", async () => {
+    vi.stubEnv("META_MODEL_API_KEY","verification-test-key"); vi.stubGlobal("fetch",vi.fn().mockRejectedValue(new Error("offline")));
+    await expect(verifyCreativeWithMeta(input)).rejects.toMatchObject({code:"network_error"});
+  });
+  it("times out stalled inspection without saving a result", async () => {
+    vi.useFakeTimers(); vi.stubEnv("META_MODEL_API_KEY","verification-test-key");
+    vi.stubGlobal("fetch",vi.fn((_url,init)=>new Promise((_resolve,reject)=>init.signal.addEventListener("abort",()=>reject(new Error("aborted"))))));
+    const pending=expect(verifyCreativeWithMeta(input)).rejects.toMatchObject({code:"timeout"});
+    // Wait for asynchronous image hashing before advancing the inspection timer.
+    await vi.waitFor(()=>expect(fetch).toHaveBeenCalled(),{interval:1});
+    await vi.advanceTimersByTimeAsync(90000); await pending;
   });
 });
