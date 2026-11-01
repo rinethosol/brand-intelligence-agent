@@ -1,3 +1,4 @@
+import { assetSourceLabel, isControlledOriginal } from "@/lib/agent/controlled-original";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -60,7 +61,7 @@ function Verification() {
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <Select value={asset.id} onValueChange={(id) => { setSelected(id); setError(""); }} disabled={running}>
             <SelectTrigger className="w-full sm:w-80"><SelectValue /></SelectTrigger>
-            <SelectContent>{generatedCreatives.map((a, index) => <SelectItem key={a.id} value={a.id}>Original {index + 1} · {a.metadata.profile.name}</SelectItem>)}</SelectContent>
+            <SelectContent>{generatedCreatives.map((a, index) => <SelectItem key={a.id} value={a.id}>Original {index + 1} · {a.metadata.profile.name}{isControlledOriginal(a) ? " · Controlled test (user-supplied)" : ""}</SelectItem>)}</SelectContent>
           </Select>
           <Button onClick={onVerify} disabled={running || !asset.metadata.analysis}>
             {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
@@ -74,7 +75,7 @@ function Verification() {
           <div className="space-y-4">
             <p className="text-sm font-medium text-success">Actual AI-generated original · Muse Image 1.0</p>
             <img src={asset.imageUrl} alt={`Original campaign creative for ${asset.metadata.profile.name}`} className="h-auto w-full rounded-md border border-border" />
-            <p className="text-xs text-muted-foreground">{asset.metadata.width} × {asset.metadata.height} PNG · Rules and brief from this original’s saved record</p>
+            <p className="text-xs text-muted-foreground">{asset.metadata.width} × {asset.metadata.height} PNG · {assetSourceLabel(asset)} · Rules and brief from this original’s saved record</p>
             <Panel title="Overall status">
               <StatusBadge status={result?.overall ?? "NEEDS_REVIEW"} large />
               <p className="mt-3 text-sm text-muted-foreground">{result ? `Inspected by ${result.model}` : "Not inspected yet"}</p>

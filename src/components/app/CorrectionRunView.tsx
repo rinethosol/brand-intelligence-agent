@@ -1,3 +1,4 @@
+import { assetSourceLabel } from "@/lib/agent/controlled-original";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Panel, StatusBadge } from "./ui-bits";
@@ -24,7 +25,7 @@ function ImageRecord({ asset, title }: { asset: GeneratedCreative | null; title:
   return <section className="min-w-0">
     <h2 className="mb-3 font-medium">{title}</h2>
     {asset ? <><img src={asset.imageUrl} alt={`${title} for ${asset.metadata.profile.name}`} className="h-auto w-full rounded-md border border-border" />
-      <p className="mt-2 text-xs text-muted-foreground">{asset.metadata.width} × {asset.metadata.height} PNG · {asset.metadata.model} · {asset.metadata.completedAt}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{asset.metadata.width} × {asset.metadata.height} PNG · {assetSourceLabel(asset)} · {asset.metadata.completedAt}</p>
       <Button asChild variant="outline" size="sm" className="mt-3"><a href={asset.imageUrl} download={`${asset.id}.png`}><Download className="mr-2 h-4 w-4" />Download {title.toLowerCase()}</a></Button></> : <p className="text-sm text-muted-foreground">No image returned.</p>}
   </section>;
 }

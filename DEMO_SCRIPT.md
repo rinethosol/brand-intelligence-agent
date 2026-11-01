@@ -7,6 +7,7 @@
 - A working Meta key with Muse Spark 1.3 and Muse Image 1.0 access.
 - Analyze, save, generate and inspect Halden in one session; download image, record and findings before reload.
 - Capture the actual controlled case's correction session and downloadable report before reload. It is **not bundled into the repository** and the app has no import/replay button. Previously verified files were retained temporarily during development, not shipped as permanent replay fixtures. If those recordings/files are unavailable, reproduce a clearly labeled controlled test through a maintainer's isolated fixture procedure before filming; do not pretend an absent session can be restored through the UI.
+- **Controlled test procedure (in the app):** analyze a fictional strict profile that forbids plastic bottles in forest imagery → in Studio, fill in the brief and use **Upload controlled test PNG** (labeled "User-supplied controlled test image", never Muse-generated) → verify it on Verification → run Self-Correction only if evidence-backed REVISE findings appear → download PNGs and the JSON report before reloading. Show the upload label on screen.
 - Capture original/revised PNGs, actual rule evidence, activity timeline and final NEEDS_REVIEW result. Do not expose generation prompts or private profile details; keep keys, secret forms and environment files off camera.
 - Edit separate real sessions together only with explicit captions identifying recorded results. Do not use the hand-written demo verification tab as proof of live analysis.
 

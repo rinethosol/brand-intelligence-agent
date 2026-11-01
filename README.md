@@ -67,6 +67,10 @@ Official references: [Responses](https://dev.meta.ai/docs/protocols/responses), 
 4. PNG signature/header/end checks and aspect-ratio arithmetic supplement visual findings. They are not full CRC/decompression certification.
 5. `REVISE` takes precedence; otherwise any uncertain/review-only finding yields `NEEDS_REVIEW`. Only complete evidence-backed passing coverage can yield `PASS`.
 
+### Controlled test original (user-supplied)
+
+Studio includes a separately labeled **Controlled Test — Deliberately Noncompliant Original** upload used only to demonstrate correction. It accepts a PNG (max 8 MB, 256–4096 px per side, matching the selected format's aspect ratio), binds it to the current brief and the validated rules from the current brand analysis, and records provenance as `user-supplied-controlled-test` / "User-supplied controlled test image" with no generator prompt. Upload makes no Meta call and claims no compliance. It goes through the same independent Muse Spark verification, SHA-256 checks and bounded correction loop; every revision must come from Muse Image 1.0, and the UI, provenance record and JSON report keep the uploaded original distinct from the regenerated images.
+
 ### Autonomous self-correction
 The loop freshly verifies the original and checks the asset ID and SHA-256. Only evidenced, supported `REVISE` findings with concrete instructions are eligible. `NEEDS_REVIEW` alone and image/record inconsistencies do not trigger regeneration. Muse Spark plans only eligible changes and describes each passing attribute to preserve. Muse Image then regenerates using the original brand, brief, rules and plan. Each actual new PNG is independently reverified.
 
