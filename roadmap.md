@@ -15,6 +15,6 @@
 - [x] Connect live verification screen without automatic corrections; test original Halden image and report limitations in PHASE2-STATUS.md.
 
 # Milestone 4: Bounded autonomous correction
-- [ ] Add evidence-gated targeted revision planning and bounded independent reverification.
-- [ ] Connect before/after comparison, timeline, approval and downloadable report/assets.
-- [ ] Test safety rules and complete a genuine controlled correction cycle; document limitations.
+- [x] Add evidence-gated targeted revision planning and bounded independent reverification.
+- [x] Connect before/after comparison, timeline, approval and downloadable report/assets.
+- [x] Test safety rules and complete a genuine controlled correction cycle; document limitations.
