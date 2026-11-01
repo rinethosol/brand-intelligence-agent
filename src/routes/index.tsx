@@ -68,7 +68,7 @@ function Dashboard() {
           ))}
           {!providers && <p className="text-sm text-muted-foreground">Checking…</p>}
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">Actual AI analysis and generated images are labeled separately. Verification, corrections and reports remain demo data.</p>
+        <p className="mt-4 text-xs text-muted-foreground">Actual AI analysis, generated originals and image findings are labeled separately from demos. Corrections and reports remain demo data.</p>
       </Panel>
     </div>
   );
