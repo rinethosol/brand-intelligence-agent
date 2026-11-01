@@ -17,6 +17,8 @@ export const Route = createFileRoute("/brand")({
       { name: "description", content: "Define brand identity, colors, guidelines and forbidden elements as a structured profile." },
       { property: "og:title", content: "Brand Intelligence" },
       { property: "og:description", content: "Build a structured Brand Identity Profile." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: BrandPage,

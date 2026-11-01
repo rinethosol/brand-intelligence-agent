@@ -12,6 +12,8 @@ export const Route = createFileRoute("/verification")({
       { name: "description", content: "Independent checks for color, personality, forbidden elements and brief alignment." },
       { property: "og:title", content: "Brand Verification" },
       { property: "og:description", content: "Evidence-based brand consistency checks." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Verification,

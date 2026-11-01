@@ -12,6 +12,8 @@ export const Route = createFileRoute("/correction")({
       { name: "description", content: "Generate, verify, identify violations, revise and verify again — in a bounded loop." },
       { property: "og:title", content: "Self-Correction Loop" },
       { property: "og:description", content: "Watch creatives get corrected against brand rules." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Correction,
