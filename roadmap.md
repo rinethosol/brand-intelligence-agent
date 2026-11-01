@@ -8,3 +8,8 @@
 - [x] Verify official Muse Image model, endpoint, authentication, schemas and supported image sizes/formats.
 - [x] Connect Generate Creative securely using the existing Meta key; retain original image and metadata, separate from demos.
 - [x] Test a real Halden Outdoor image and existing analysis; report confirmed results and blockers in PHASE2-STATUS.md.
+
+# Milestone 3: Independent verification
+- [ ] Verify official Meta image-understanding input contract.
+- [ ] Add independent verifyCreative with deterministic image checks, source-linked rule evidence and conservative uncertainty.
+- [ ] Connect live verification screen without automatic corrections; test original Halden image and report limitations.
