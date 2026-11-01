@@ -1,7 +1,23 @@
 # Phase 2 status — November 1, 2026
 
-## Decision
-Stopped at the Muse Spark integration boundary as requested. No speculative API requests, substitute models, or fabricated analysis were added. Pages and styling are preserved.
+## Live brand analysis milestone — November 1, 2026
+- Created `analyzeBrand`, a POST server function in `src/lib/agent/agent.functions.ts`, backed by `analyzeBrandWithMeta` in the server-only provider adapter.
+- `META_MODEL_API_KEY` was saved using the secure secret form. Lovable Cloud is connected; this milestone does not add durable profile storage or user logins.
+- Official contract confirmed at https://dev.meta.ai/docs/protocols/responses and https://dev.meta.ai/docs/quickstart: POST https://api.meta.ai/v1/responses, Bearer authentication, model `muse-spark-1.3`, `instructions` plus string `input`, nested `output[].content[]` / `output_text` parsing.
+- Non-streaming follows Meta's documented examples by omitting `stream`; explicit `false` was not needed. Temperature is 0.2 and maximum output tokens 8192. No assistant history is sent.
+- Validates required profile fields, input bounds and HEX colors. Strict Zod output checks reject extra fields, duplicate rule IDs, invented colors/personality/prohibited elements and sources not quoted from supplied input.
+- Handles rate limits, access failures, other HTTP errors, incomplete envelopes, invalid model JSON, unreadable responses, and a 45-second timeout. Provider bodies and keys are never logged or returned. No fabricated fallback or automatic retry is used.
+- Added Analyze Brand with AI, loading/success/error states, actual AI JSON and source-linked rules in the existing profile panel. User-entered/sample data stays separate; edits invalidate stale analysis. Existing manual saving and other pages are preserved.
+
+### Actual verification
+- First live Halden Outdoor request completed through the browser UI: genuine validated response with 14 rules and colors #1F3B2D, #E8DCC4, #D9622B. UI displayed results without page errors. Editing cleared stale results; manual Save Brand Profile worked.
+- Second live request completed during secrecy verification: 139 browser responses checked, no configured Meta key found in their bodies or outgoing request URL/body; no browser request went directly to Meta. Credential headers are created only server-side.
+- `bunx vitest run src/test/brand-analysis.test.ts src/test/agent-boundary.test.ts src/test/app-routing.test.tsx`: 3 files / 15 tests passed. Mocked tests are contract/error tests, not evidence of live calls; live evidence is the separate UI runs above.
+- Latest automatic build: build OK. All six content routes retain their individual sharing metadata.
+- No blockers remain for initial live text-only brand analysis. Logo image analysis, generation, independent visual verification, durable storage, auth, and revision orchestration are not implemented by this milestone. Existing creative/report results remain labeled demo. The analysis function is public and CSRF-protected; it does not read saved private records.
+
+## Historical boundary review (superseded for brand analysis)
+The sections below record the earlier stopped integration review, before the user supplied Playground settings and the official Responses contract became accessible. Its missing-key/documentation statements no longer describe the current brand-analysis integration.
 
 ## API verification
 Meta confirms a Muse Spark developer access path and later public-preview Meta Model API announcements. The official material accessible during this review did not establish an exact request endpoint, authentication header, API model identifier, or structured JSON contract. This is a documentation verification limitation, not a claim that the API does not exist.
