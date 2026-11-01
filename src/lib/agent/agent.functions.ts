@@ -1,6 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { BrandProfileSchema, CreativeBriefSchema, BrandAnalysisInputSchema, GenerateCreativeInputSchema, VerifyCreativeInputSchema } from "./schemas";
 import { z } from "zod";
+import { CorrectionLoopInputSchema } from "./schemas";
+
+export const runCorrectionLoop = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => CorrectionLoopInputSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { executeCorrectionLoop } = await import("./correction.server");
+    const { generateCreativeWithMeta, verifyCreativeWithMeta, planRevisionWithMeta } = await import("./providers.server");
+    return executeCorrectionLoop(data, { generate: generateCreativeWithMeta, verify: verifyCreativeWithMeta, plan: planRevisionWithMeta });
+  });
 
 export const analyzeBrand = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => BrandAnalysisInputSchema.parse(data))
