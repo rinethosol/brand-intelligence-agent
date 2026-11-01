@@ -111,6 +111,41 @@ export type CriterionKey = z.infer<typeof CriterionKey>;
 export const VerificationStatus = z.enum(["PASS", "REVISE", "NEEDS_REVIEW"]);
 export type VerificationStatus = z.infer<typeof VerificationStatus>;
 
+export const VerifyCreativeInputSchema = z.object({
+  asset: GeneratedCreativeSchema,
+  analysis: BrandAnalysisSchema,
+}).strict();
+export type VerifyCreativeInput = z.infer<typeof VerifyCreativeInputSchema>;
+
+export const VisualRuleFindingSchema = z.object({
+  rule_id: z.string().min(1).max(100),
+  criterion: analysisText,
+  status: VerificationStatus,
+  evidence: z.array(analysisText).max(20),
+  verification_method: z.literal("Meta image understanding"),
+  suggested_correction: analysisText.nullable(),
+  explanation: analysisText,
+}).strict();
+export type VisualRuleFinding = z.infer<typeof VisualRuleFindingSchema>;
+export const VisualVerificationResponseSchema = z.object({
+  findings: z.array(VisualRuleFindingSchema).min(1).max(100),
+  observed_text: z.array(analysisText).max(50),
+  image_observations: z.array(analysisText).min(1).max(30),
+}).strict();
+export const LiveRuleFindingSchema = VisualRuleFindingSchema.extend({
+  verification_method: z.enum(["Meta image understanding", "PNG header inspection", "Aspect ratio arithmetic", "Human review required"]),
+  source_guideline: analysisText,
+});
+export type LiveRuleFinding = z.infer<typeof LiveRuleFindingSchema>;
+export const LiveVerificationSchema = z.object({
+  id: z.string(), assetId: z.string(), source: z.literal("live"), overall: VerificationStatus,
+  findings: z.array(LiveRuleFindingSchema), imageObservations: z.array(analysisText), observedText: z.array(analysisText),
+  verifiedAt: z.string(), model: z.literal("muse-spark-1.3"), endpoint: z.literal("https://api.meta.ai/v1/responses"),
+  method: z.literal("Independent image understanding plus deterministic PNG checks"),
+  imageSha256: z.string(), responseId: z.string(), analysis: BrandAnalysisSchema,
+});
+export type LiveVerification = z.infer<typeof LiveVerificationSchema>;
+
 export const CriterionResultSchema = z.object({
   key: CriterionKey,
   status: VerificationStatus,
