@@ -88,7 +88,7 @@ describe("Correction round limits (server-enforced from provenance)", () => {
         metadata: { ...original.metadata, model: "muse-image-1.0" as const, endpoint: "https://api.meta.ai/v1/images/generations" as const, sourceLabel: undefined } })),
       verify: vi.fn(async ({ asset }: { asset: GeneratedCreative }) => mk(asset, seq[i++]!)),
       plan: vi.fn(async ({ verification }: { verification: LiveVerification }) => ({ plan: { changes: verification.findings.filter((f) => f.status === "REVISE").map((f) => ({ rule_id: f.rule_id, instruction: "Remove" })),
-        preserve: verification.findings.filter((f) => f.status === "PASS").map((f) => ({ rule_id: f.rule_id, reason: "Keep" })), rationale: "Fix" }, responseId: "p", plannedAt: "t" })) };
+        preserve: verification.findings.filter((f) => f.status === "PASS").map((f) => ({ rule_id: f.rule_id, attribute: "Keep" })), rationale: "Fix" }, responseId: "p", plannedAt: "t" })) };
   }
   it("controlled test stops after exactly one round with violations preserved", async () => {
     const original = buildControlledOriginal({ ...base, analysis: analysis4 });
