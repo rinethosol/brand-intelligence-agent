@@ -26,7 +26,7 @@ describe("Independent visual verification (mocked contract, not live evidence)",
     expect(JSON.stringify(result)).not.toContain("verification-test-key"); expect(result.overall).toBe("NEEDS_REVIEW");
   });
   it("accepts complete matching rule IDs", () => { expect(parseVisualVerification(body(),input).findings[0]?.rule_id).toBe("scene"); });
-  it.each([[{ ...finding, rule_id: "unknown" }], [finding,finding], []])("rejects unknown, duplicate or missing rule IDs", (findings) => { expect(() => parseVisualVerification(body(findings),input)).toThrow(); });
+  it.each([{ findings: [{ ...finding, rule_id: "unknown" }] }, { findings: [finding,finding] }, { findings: [] }])("rejects unknown, duplicate or missing rule IDs", ({ findings }) => { expect(() => parseVisualVerification(body(findings),input)).toThrow(); });
   it("does not manufacture evidence for an empty PASS", () => {
     const f = parseVisualVerification(body([{ ...finding, evidence: [] }]),input).findings[0];
     expect(f?.status).toBe("NEEDS_REVIEW"); expect(f?.evidence).toEqual([]);
