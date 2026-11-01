@@ -73,3 +73,48 @@ describe("Controlled test original upload", () => {
     expect(bad.stopReason).toBe("api_failure"); expect(bad.attempts[0]?.asset).toBeNull();
   });
 });
+
+describe("Correction round limits (server-enforced from provenance)", () => {
+  const hash = async (x: GeneratedCreative) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", inspectOriginalPng(x.imageUrl).bytes)), (b) => b.toString(16).padStart(2, "0")).join("");
+  const mk = async (asset: GeneratedCreative, statuses: ("REVISE" | "PASS")[]): Promise<LiveVerification> => ({ id: crypto.randomUUID(), assetId: asset.id, source: "live", overall: statuses.includes("REVISE") ? "REVISE" : "PASS",
+    findings: statuses.map((status, i) => ({ rule_id: ["a", "b", "c", "d"][i]!, criterion: ["a", "b", "c", "d"][i]!, status, evidence: ["Visible object at center"], verification_method: "Meta image understanding" as const, suggested_correction: status === "REVISE" ? "Remove the object" : null, explanation: "Observed", source_guideline: "g" })),
+    imageObservations: ["x"], observedText: [], verifiedAt: "t", model: "muse-spark-1.3", endpoint: "https://api.meta.ai/v1/responses", method: "Independent image understanding plus deterministic PNG checks", imageSha256: await hash(asset), responseId: "r", analysis: analysis4 });
+  const analysis4 = { ...analysis, verification_rules: ["a", "b", "c", "d"].map((id) => ({ ...analysis.verification_rules[0]!, id, criterion: id })) };
+  // Each round fixes exactly one rule: improvement continues, so only the round limit stops the loop.
+  const seq: ("REVISE" | "PASS")[][] = [["REVISE", "REVISE", "REVISE", "REVISE"], ["PASS", "REVISE", "REVISE", "REVISE"], ["PASS", "PASS", "REVISE", "REVISE"], ["PASS", "PASS", "PASS", "REVISE"]];
+  function providers(original: GeneratedCreative) {
+    let i = 0;
+    return { generate: vi.fn(async (_x: unknown, r?: { attempt: number }) => ({ ...structuredClone(original), id: `rev-${r?.attempt}`, iteration: (r?.attempt ?? 0) + 1, prompt: "p",
+        metadata: { ...original.metadata, model: "muse-image-1.0" as const, endpoint: "https://api.meta.ai/v1/images/generations" as const, sourceLabel: undefined } })),
+      verify: vi.fn(async ({ asset }: { asset: GeneratedCreative }) => mk(asset, seq[i++]!)),
+      plan: vi.fn(async ({ verification }: { verification: LiveVerification }) => ({ plan: { changes: verification.findings.filter((f) => f.status === "REVISE").map((f) => ({ rule_id: f.rule_id, instruction: "Remove" })),
+        preserve: verification.findings.filter((f) => f.status === "PASS").map((f) => ({ rule_id: f.rule_id, reason: "Keep" })), rationale: "Fix" }, responseId: "p", plannedAt: "t" })) };
+  }
+  it("controlled test stops after exactly one round with violations preserved", async () => {
+    const original = buildControlledOriginal({ ...base, analysis: analysis4 });
+    const p = providers(original);
+    const run = await executeCorrectionLoop({ original, analysis: analysis4 }, p);
+    expect(run.maxAttempts).toBe(1);
+    expect(run.attempts).toHaveLength(1);
+    expect(p.generate).toHaveBeenCalledTimes(1);
+    expect(p.verify).toHaveBeenCalledTimes(2);
+    expect(run.stopReason).toBe("maximum_attempts");
+    expect(run.finalStatus).toBe("REVISE");
+    expect(run.attempts[0]?.remainingRuleIds).toEqual(["b", "c", "d"]);
+    expect(run.events.some((e) => e.message.startsWith("Configured round limit: 1"))).toBe(true);
+    expect(run.events.some((e) => e.message.startsWith("Round limit 1 reached; 3 actionable"))).toBe(true);
+    const report = correctionReport(run, "pending");
+    expect(report.maxAttempts).toBe(1); expect(report.stopReason).toBe("maximum_attempts"); expect(report.humanApproval).toBe("pending");
+  });
+  it("normal Muse-generated workflow keeps the three-round maximum", async () => {
+    const controlled = buildControlledOriginal({ ...base, analysis: analysis4 });
+    const original: GeneratedCreative = { ...controlled, prompt: "generator prompt", metadata: { ...controlled.metadata, model: "muse-image-1.0", endpoint: "https://api.meta.ai/v1/images/generations", sourceLabel: undefined } };
+    const p = providers(original);
+    const run = await executeCorrectionLoop({ original, analysis: analysis4 }, p);
+    expect(run.maxAttempts).toBe(3);
+    expect(run.attempts).toHaveLength(3);
+    expect(p.generate).toHaveBeenCalledTimes(3);
+    expect(run.stopReason).toBe("maximum_attempts");
+    expect(run.events.some((e) => e.message.startsWith("Configured round limit: 3"))).toBe(true);
+  });
+});
