@@ -2,6 +2,25 @@ import { VisualVerificationResponseSchema, type VerifyCreativeInput, type LiveRu
 import { parseBrandAnalysis } from "./brand-analysis";
 import { CREATIVE_SIZES } from "./creative-generation";
 
+/** Meta Responses text.format schema; all properties required, no fabricated confidence field. */
+export const VISUAL_VERIFICATION_JSON_SCHEMA = {
+  type: "object", additionalProperties: false, required: ["findings", "observed_text", "image_observations"],
+  properties: {
+    findings: { type: "array", items: { type: "object", additionalProperties: false,
+      required: ["rule_id", "criterion", "status", "evidence", "verification_method", "suggested_correction", "explanation"],
+      properties: {
+        rule_id: { type: "string" }, criterion: { type: "string" },
+        status: { type: "string", enum: ["PASS", "REVISE", "NEEDS_REVIEW"] },
+        evidence: { type: "array", items: { type: "string" } },
+        verification_method: { type: "string", enum: ["Meta image understanding"] },
+        suggested_correction: { type: ["string", "null"] }, explanation: { type: "string" },
+      },
+    } },
+    observed_text: { type: "array", items: { type: "string" } },
+    image_observations: { type: "array", items: { type: "string" } },
+  },
+};
+
 export function inspectOriginalPng(url: string) {
   const base64 = url.split(",")[1];
   if (!url.startsWith("data:image/png;base64,") || !base64 || base64.length > 28000000 || base64.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) throw new Error("Invalid original PNG");
