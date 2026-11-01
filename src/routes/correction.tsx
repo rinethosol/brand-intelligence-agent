@@ -34,7 +34,7 @@ function Correction() {
   const run = correctionRuns.filter((r) => r.original?.id === asset?.id).at(-1);
   async function onRun() {
     if (!asset?.metadata.analysis) return;
-    setRunning(true); setError("");
+    setSelected(asset.id); setRunning(true); setError("");
     try { retainCorrectionRun(await invoke({ data: { original: asset, analysis: asset.metadata.analysis } })); }
     catch { setError("The correction request could not finish. The original remains unchanged; no completed run was received."); }
     finally { setRunning(false); }
