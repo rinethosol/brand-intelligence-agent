@@ -1,7 +1,7 @@
 /**
  * Server-only provider adapters. Credentials are read from process.env inside
- * handlers and never reach the browser. Only brand analysis is wired to Meta;
- * generation, revisions and independent verification remain unconfigured.
+ * handlers and never reach the browser. Brand analysis and single-shot image
+ * generation are wired to Meta; revisions and independent verification are not.
  */
 import type { BrandProfile, CreativeAsset, CreativeBrief, VerificationResult } from "./schemas";
 import { BrandAnalysisInputSchema } from "./schemas";
@@ -175,8 +175,8 @@ export function getVerificationProvider(): VerificationProvider {
 
 export function providerStatus() {
   return [
-    { name: "Meta Muse Spark", role: "Brand analysis (revision adapter not connected)", envVar: "META_MODEL_API_KEY", keyPresent: !!(process.env["META_MODEL_API_KEY"] ?? process.env["META_MUSE_SPARK_API_KEY"]) },
-    { name: "Meta Image Generation", role: "Creative generation", envVar: "META_IMAGE_API_KEY", keyPresent: !!process.env["META_IMAGE_API_KEY"] },
-    { name: "Brand Verification Service", role: "Independent verification", envVar: "BRAND_VERIFIER_API_KEY", keyPresent: !!process.env["BRAND_VERIFIER_API_KEY"] },
+    { name: "Meta Muse Spark", role: "Brand analysis (revision adapter not connected)", envVar: "META_MODEL_API_KEY", keyPresent: !!(process.env["META_MODEL_API_KEY"] ?? process.env["META_MUSE_SPARK_API_KEY"]), implemented: true },
+    { name: "Meta Muse Image", role: "Creative generation · images require review", envVar: "META_MODEL_API_KEY", keyPresent: !!process.env["META_MODEL_API_KEY"], implemented: true },
+    { name: "Brand Verification Service", role: "Independent verification", envVar: "BRAND_VERIFIER_API_KEY", keyPresent: !!process.env["BRAND_VERIFIER_API_KEY"], implemented: false },
   ];
 }

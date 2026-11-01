@@ -5,6 +5,6 @@
 - [x] Run automated tests and real Halden Outdoor requests through the UI; report scope limitations in PHASE2-STATUS.md.
 
 # Milestone 2: Live Meta creative generation
-- [ ] Verify official Muse Image model, endpoint, authentication, schemas and supported image sizes/formats.
-- [ ] Connect Generate Creative securely using the existing Meta key; retain original image and metadata, separate from demos.
-- [ ] Test a real Halden Outdoor image and existing analysis; report confirmed results and blockers.
+- [x] Verify official Muse Image model, endpoint, authentication, schemas and supported image sizes/formats.
+- [x] Connect Generate Creative securely using the existing Meta key; retain original image and metadata, separate from demos.
+- [x] Test a real Halden Outdoor image and existing analysis; report confirmed results and blockers in PHASE2-STATUS.md.

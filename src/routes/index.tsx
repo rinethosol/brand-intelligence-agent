@@ -58,17 +58,17 @@ function Dashboard() {
       <Panel title="Integration status" className="mt-12">
         <div className="grid gap-3 md:grid-cols-3">
           {(providers ?? []).map((p) => (
-            <div key={p.envVar} className="rounded-lg border border-border bg-background/40 p-4">
+            <div key={p.name} className="rounded-lg border border-border bg-background/40 p-4">
               <div className="flex items-center gap-2"><KeyRound className="h-4 w-4 text-muted-foreground" /><span className="font-medium text-foreground">{p.name}</span></div>
               <p className="mt-1 text-sm text-muted-foreground">{p.role}</p>
               <p className={`mt-3 text-xs font-medium ${p.keyPresent ? "text-warning" : "text-muted-foreground"}`}>
-                {p.keyPresent ? "Key present · adapter not yet implemented" : `Not configured · ${p.envVar}`}
+                {p.keyPresent ? p.implemented ? "Live integration · key configured" : "Key present · adapter not yet implemented" : "Not configured"}
               </p>
             </div>
           ))}
           {!providers && <p className="text-sm text-muted-foreground">Checking…</p>}
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">Until these are connected, every result in this workspace is labeled demo data.</p>
+        <p className="mt-4 text-xs text-muted-foreground">Actual AI analysis and generated images are labeled separately. Verification, corrections and reports remain demo data.</p>
       </Panel>
     </div>
   );

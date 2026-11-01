@@ -1,5 +1,24 @@
 # Phase 2 status — November 1, 2026
 
+## Milestone 2: live Meta creative generation — November 1, 2026
+- Official contract verified from rendered Meta documentation: https://dev.meta.ai/docs/image-generation and https://dev.meta.ai/docs/api-reference/images/create-image. The website-fetch service could not read the site; browser inspection successfully read the full feature page.
+- Model: `muse-image-1.0`. Endpoint: `POST https://api.meta.ai/v1/images/generations`. Authentication: server-only Bearer `META_MODEL_API_KEY`; no new key was requested.
+- JSON request: `model`, `prompt`, `n: 1`, `size`, `response_format: b64_json`, `output_format: png`, and documented `tool_enablement` disabling reference search/web search/shell for this fictional brand. No streaming, provider substitution or automatic retry.
+- Meta supports PNG, JPEG and WebP; default is WebP. `size` is a WxH aspect-ratio request, NOT an exact pixel-size guarantee; aspect ratios beyond 16:1 are rejected. The app requests 1:1, 9:16, 4:5 and 16:9 for its existing formats and measures actual PNG dimensions.
+- Documented response: `created`, `data[].b64_json` (or temporary signed `url` if requested), `output_format`, `background`, `usage`. The adapter validates the one-image response, base64, PNG signature/header/end marker, and dimensions before returning original bytes.
+- Added `generateCreative`, a public same-origin CSRF-protected POST server function with bounded brand/brief validation, no private-record reads. Server-only `generateCreativeWithMeta` constructs the prompt from current brand/profile guidelines, approved colors, exclusions and all campaign brief fields. Saved validated analysis is reused only when its profile-content fingerprint matches.
+- Generate Creative now displays real returned PNGs separately from demo mockups, plus unverified logo/text status, original image download and metadata download. Original images, full prompt, profile/brief snapshots, analysis, model, timestamps, dimensions and usage are retained in session history. Navigation retains originals; reload does not. Durable storage was not added.
+- Added loading, 3-minute timeout, access/rate/API/network failures and invalid-response handling. Failures never replace an existing original with a demo or fabricated success. The timeout does not establish that Meta cancelled billing; the error warns before a new request.
+
+### Actual Milestone 2 verification
+- A real Halden Outdoor brand analysis completed after these changes, with 17 validated rules carried into generation. An earlier analysis check failed to reach success within the browser wait; the separate later request completed. Existing analysis contract and limits were not changed.
+- A genuine Muse Image request completed through the studio. Original ID: `7a450737-3718-4627-bfa0-bb698d3e65b9`. Returned PNG decoded in the browser at **1600 × 1600**, despite requested size 1024x1024 (documented aspect-ratio semantics).
+- Visually inspected original: single hiker on a misty autumn forest trail wearing a rust jacket, with “Weather-ready. City-ready.” headline, matching the brief's core scene/message. The model also added unsupplied product copy (“Lightweight…Packable”) and a blank logo area. These are **not** certified compliant; independent verification/post-processing remains required, and the original is preserved without corrections.
+- The studio showed the original image and downloads, removed the demo preview notice, retained the exact image bytes after navigation, and had no mobile horizontal overflow. Browser checks found zero page errors, zero Meta credential matches in outgoing requests/response bodies, and zero direct browser requests to Meta.
+- Automated tests: **4 files / 30 tests passed** (`creative-generation`, `brand-analysis`, `agent-boundary`, `app-routing`). Tests cover request shape, actual profile/brief prompt values, grounding, format ratios, snapshot retention, unverified logo/text status, invalid responses, missing keys, HTTP failures and timeout. Mocked tests are separate from the successful live request above.
+- Automatic build: build OK. The existing design and all page sharing metadata are preserved.
+- No blocker remains for initial live generation. Deferred: independent image verification, deterministic logo/text insertion, correction orchestration and durable saved assets. Image-generation skill prompt guidance informed the prompt; the explicitly requested Meta API was used instead of Lovable's default image provider.
+
 ## Live brand analysis milestone — November 1, 2026
 - Created `analyzeBrand`, a POST server function in `src/lib/agent/agent.functions.ts`, backed by `analyzeBrandWithMeta` in the server-only provider adapter.
 - `META_MODEL_API_KEY` was saved using the secure secret form. Lovable Cloud is connected; this milestone does not add durable profile storage or user logins.
