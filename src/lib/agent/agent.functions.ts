@@ -2,9 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { BrandProfileSchema, CreativeBriefSchema, BrandAnalysisInputSchema, GenerateCreativeInputSchema, VerifyCreativeInputSchema } from "./schemas";
 import { z } from "zod";
 import { CorrectionLoopInputSchema } from "./schemas";
+import { assertWithinSizeLimit, IMAGE_REQUEST_LIMIT_BYTES, TEXT_REQUEST_LIMIT_BYTES } from "./request-limits";
 
 export const runCorrectionLoop = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => CorrectionLoopInputSchema.parse(data))
+  .inputValidator((data: unknown) => { assertWithinSizeLimit(data, IMAGE_REQUEST_LIMIT_BYTES); return CorrectionLoopInputSchema.parse(data); })
   .handler(async ({ data }) => {
     const { executeCorrectionLoop } = await import("./correction.server");
     const { generateCreativeWithMeta, verifyCreativeWithMeta, planRevisionWithMeta } = await import("./providers.server");
@@ -12,7 +13,7 @@ export const runCorrectionLoop = createServerFn({ method: "POST" })
   });
 
 export const analyzeBrand = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => BrandAnalysisInputSchema.parse(data))
+  .inputValidator((data: unknown) => { assertWithinSizeLimit(data, TEXT_REQUEST_LIMIT_BYTES); return BrandAnalysisInputSchema.parse(data); })
   .handler(async ({ data }) => {
     const { analyzeBrandWithMeta, BrandAnalysisError } = await import("./providers.server");
     try {
@@ -29,7 +30,7 @@ export const getProviderStatus = createServerFn({ method: "GET" }).handler(async
 });
 
 export const generateCreative = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => GenerateCreativeInputSchema.parse(data))
+  .inputValidator((data: unknown) => { assertWithinSizeLimit(data, TEXT_REQUEST_LIMIT_BYTES); return GenerateCreativeInputSchema.parse(data); })
   .handler(async ({ data }) => {
     const { generateCreativeWithMeta, CreativeGenerationError } = await import("./providers.server");
     try { return { ok: true as const, asset: await generateCreativeWithMeta(data) }; }
@@ -40,7 +41,7 @@ export const generateCreative = createServerFn({ method: "POST" })
   });
 
 export const verifyCreative = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => VerifyCreativeInputSchema.parse(data))
+  .inputValidator((data: unknown) => { assertWithinSizeLimit(data, IMAGE_REQUEST_LIMIT_BYTES); return VerifyCreativeInputSchema.parse(data); })
   .handler(async ({ data }) => {
     const { verifyCreativeWithMeta, CreativeVerificationError } = await import("./providers.server");
     try { return { ok: true as const, verification: await verifyCreativeWithMeta(data) }; }
