@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Sparkles, AlertCircle, Download } from "lucide-react";
+import { Loader2, Sparkles, AlertCircle, Download, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { demoAssets } from "@/lib/agent/demo-data";
 import { retainGeneratedCreative, setWorkspace, useWorkspace } from "@/lib/agent/store";
 import { generateCreative } from "@/lib/agent/agent.functions";
 import { profileFingerprint } from "@/lib/agent/creative-generation";
+import { assetSourceLabel, buildControlledOriginal, ControlledOriginalError, isControlledOriginal } from "@/lib/agent/controlled-original";
 
 export const Route = createFileRoute("/studio")({
   head: () => ({
@@ -41,6 +42,33 @@ function Studio() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const formRef = useRef<HTMLFormElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const currentAnalysis = analyzedBrand?.fingerprint === profileFingerprint(profile) ? analyzedBrand.analysis : undefined;
+
+  function readInput(form: HTMLFormElement) {
+    const f = new FormData(form);
+    const g = (k: string) => String(f.get(k) ?? "");
+    return GenerateCreativeInputSchema.safeParse({ profile,
+      brief: { id: crypto.randomUUID(), brandId: profile.id, objective: g("objective"), message: g("message"), targetAudience: g("audience"), format, visualDirection: g("direction") },
+      analysis: currentAnalysis,
+    });
+  }
+
+  async function onControlledUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; e.target.value = "";
+    setUploadError(null);
+    if (!file || !formRef.current) return;
+    const parsed = readInput(formRef.current);
+    if (!parsed.success) { setUploadError("Complete the campaign brief first; the controlled original is bound to it."); return; }
+    try {
+      const imageUrl = await new Promise<string>((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = () => reject(new Error("read")); r.readAsDataURL(file); });
+      const asset = buildControlledOriginal({ imageUrl, byteLength: file.size, mimeType: file.type, profile: parsed.data.profile, brief: parsed.data.brief, analysis: currentAnalysis });
+      setWorkspace({ brief: parsed.data.brief, briefIsDemo: false });
+      retainGeneratedCreative(asset);
+    } catch (err) { setUploadError(err instanceof ControlledOriginalError ? err.message : "The file could not be read as a valid PNG."); }
+  }
+
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
@@ -66,7 +94,7 @@ function Studio() {
       <PageHeader eyebrow="Step 02" title="Creative Studio" description={`Campaign brief for ${profile.name}.`} />
       <div className="grid gap-6 lg:grid-cols-5">
         <Panel title="Campaign brief" className="lg:col-span-3">
-          <form onSubmit={onSubmit} className="grid gap-4">
+          <form ref={formRef} onSubmit={onSubmit} className="grid gap-4">
             <F label="Campaign objective"><Input name="objective" defaultValue={brief.objective} required /></F>
             <F label="Campaign message"><Input name="message" defaultValue={brief.message} required /></F>
             <F label="Target audience"><Input name="audience" defaultValue={brief.targetAudience} required /></F>
@@ -88,16 +116,26 @@ function Studio() {
               </div>
             )}
           </form>
+          <section aria-labelledby="controlled-title" className="mt-6 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
+            <h3 id="controlled-title" className="flex items-center gap-2 font-semibold text-foreground"><FlaskConical className="h-4 w-4 text-warning" />Controlled Test — Deliberately Noncompliant Original</h3>
+            <p className="mt-1 text-muted-foreground">For demonstrating correction only. Upload your own PNG (max 8 MB, 256–4096 px, matching the selected format’s aspect ratio). It is labeled “User-supplied controlled test image”, bound to this brief and the analyzed rules, and is never presented as Muse-generated. No Meta call is made on upload.</p>
+            {!currentAnalysis && <p className="mt-2 text-warning">Analyze the current brand profile first.</p>}
+            <Label className="mt-3 inline-flex">
+              <span className={`inline-flex cursor-pointer items-center rounded-md border border-border bg-secondary px-3 py-2 font-medium text-secondary-foreground ${!currentAnalysis ? "pointer-events-none opacity-50" : ""}`}>Upload controlled test PNG</span>
+              <input type="file" accept="image/png" className="sr-only" disabled={!currentAnalysis || running} onChange={onControlledUpload} aria-label="Upload controlled test PNG" />
+            </Label>
+            {uploadError && <p role="alert" className="mt-2 text-destructive">{uploadError}</p>}
+          </section>
         </Panel>
         <div className="lg:col-span-2">
           {asset ? <div className="grid gap-3" aria-live="polite">
-            <p role="status" className="text-sm font-semibold text-success">AI-generated image · Meta Muse Image 1.0</p>
-            <img src={asset.imageUrl} alt={`Generated campaign creative for ${asset.metadata.profile.name}: ${asset.metadata.brief.message}`} className="h-auto w-full rounded-md border border-border" />
+            <p role="status" className={`text-sm font-semibold ${isControlledOriginal(asset) ? "text-warning" : "text-success"}`}>{isControlledOriginal(asset) ? "Controlled test — deliberately noncompliant · " : ""}{assetSourceLabel(asset)}</p>
+            <img src={asset.imageUrl} alt={`${isControlledOriginal(asset) ? "User-supplied controlled test image" : "Generated campaign creative"} for ${asset.metadata.profile.name}: ${asset.metadata.brief.message}`} className="h-auto w-full rounded-md border border-border" />
             <p className="text-xs text-muted-foreground">Original PNG · {asset.metadata.width} × {asset.metadata.height} · {new Date(asset.metadata.completedAt).toLocaleString()}</p>
             <p className="text-sm text-warning">Needs review · Brand compliance is not verified. Logo and campaign lettering require verification or deterministic post-processing.</p>
             <Button asChild variant="secondary"><a href={asset.imageUrl} download={`${asset.id}.png`}><Download className="mr-2 h-4 w-4" />Download original image</a></Button>
             <Button asChild><Link to="/verification">Verify original creative</Link></Button>
-            <Button asChild variant="outline"><a href={`data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify({ id: asset.id, prompt: asset.prompt, metadata: asset.metadata }, null, 2))}`} download={`${asset.id}-metadata.json`}><Download className="mr-2 h-4 w-4" />Download generation record</a></Button>
+            <Button asChild variant="outline"><a href={`data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify({ id: asset.id, prompt: asset.prompt, metadata: asset.metadata }, null, 2))}`} download={`${asset.id}-metadata.json`}><Download className="mr-2 h-4 w-4" />Download {isControlledOriginal(asset) ? "provenance" : "generation"} record</a></Button>
             <details className="text-xs text-muted-foreground"><summary className="cursor-pointer">Generation details</summary><pre className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify({ prompt: asset.prompt, ...asset.metadata, profile: { ...asset.metadata.profile, logoUrl: asset.metadata.profile.logoUrl ? "[local logo not submitted]" : null } }, null, 2)}</pre></details>
             <p className="text-xs text-muted-foreground">{generatedCreatives.length} original{generatedCreatives.length === 1 ? "" : "s"} retained in this session. Download before reloading.</p>
           </div> : <>
