@@ -82,12 +82,18 @@ export const GenerateCreativeInputSchema = z.object({
 }).strict().refine((v) => v.brief.brandId === v.profile.id, "The brief must belong to the current brand.");
 export type GenerateCreativeInput = z.infer<typeof GenerateCreativeInputSchema>;
 
+/** Provenance for a deliberately noncompliant, user-supplied controlled-test original. Never Muse-generated. */
+export const CONTROLLED_ORIGINAL_MODEL = "user-supplied-controlled-test" as const;
+export const CONTROLLED_ORIGINAL_ENDPOINT = "none:user-upload" as const;
+export const CONTROLLED_ORIGINAL_LABEL = "User-supplied controlled test image" as const;
+
 export const GeneratedCreativeSchema = CreativeAssetSchema.extend({
   source: z.literal("live"),
   imageUrl: z.string().startsWith("data:image/png;base64,"),
   metadata: z.object({
-    model: z.literal("muse-image-1.0"),
-    endpoint: z.literal("https://api.meta.ai/v1/images/generations"),
+    model: z.enum(["muse-image-1.0", CONTROLLED_ORIGINAL_MODEL]),
+    endpoint: z.enum(["https://api.meta.ai/v1/images/generations", CONTROLLED_ORIGINAL_ENDPOINT]),
+    sourceLabel: z.literal(CONTROLLED_ORIGINAL_LABEL).optional(),
     created: z.number().int().positive(),
     completedAt: z.string(),
     requestedSize: z.string(),
@@ -101,7 +107,14 @@ export const GeneratedCreativeSchema = CreativeAssetSchema.extend({
     verificationStatus: z.literal("NEEDS_REVIEW"),
     logoStatus: z.literal("requires_verification_or_post_processing"),
     textStatus: z.literal("requires_verification_or_post_processing"),
+  }).superRefine((m, ctx) => {
+    const controlled = m.model === CONTROLLED_ORIGINAL_MODEL;
+    if (controlled !== (m.endpoint === CONTROLLED_ORIGINAL_ENDPOINT) || controlled !== (m.sourceLabel === CONTROLLED_ORIGINAL_LABEL) || (controlled && m.usage))
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Inconsistent image provenance" });
   }),
+}).superRefine((a, ctx) => {
+  if (a.metadata.model === CONTROLLED_ORIGINAL_MODEL && (a.iteration !== 1 || a.prompt !== ""))
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A controlled original has no generator prompt and is never a revision" });
 });
 export type GeneratedCreative = z.infer<typeof GeneratedCreativeSchema>;
 
